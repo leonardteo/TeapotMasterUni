@@ -1,11 +1,18 @@
 #include <iostream>
-#include <GL/glew.h>
-#include <SDL.h>
 
-#ifdef _WIN32
+//OpenGL libraries
+#ifdef __APPLE__
+	#include <SDL/SDL.h>
+	#include <GLEW/GLEW.h>
+	#include <OpenGL/gl.h>
+	#include <OpenGL/glu.h>
+	#include <GLUT/GLUT.h>
+#else
 	#include <Windows.h>
+	#include <GL/glew.h>
 	#include <GL/gl.h>
 	#include <GL/glu.h>	
+	#include <SDL.h>
 #endif
 
 using namespace std;
@@ -24,11 +31,17 @@ static void InitGL(int Width, int Height)	        // We call this right after ou
 	glEnable(GL_DEPTH_TEST);			// Enables Depth Testing
 	glShadeModel(GL_SMOOTH);			// Enables Smooth Color Shading
 
+	
 	resize(Width, Height);
 }
 
 static void resize(int newWidth, int newHeight)
 {
+	
+	#ifdef __APPLE__
+	SDL_SetVideoMode(newWidth, newHeight, 32, SDL_OPENGL | SDL_RESIZABLE);
+	#endif
+	
 	glViewport(0, 0, newWidth, newHeight);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();				// Reset The Projection Matrix
