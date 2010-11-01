@@ -9,7 +9,7 @@
  *  
  */
 
-#ifdef SCENEGRAPH_H
+#ifndef SCENEGRAPH_H
 #define SCENEGRAPH_H
 
 #ifdef __APPLE__
@@ -22,6 +22,8 @@
 #include <GL/glu.h>	
 #endif
 
+#include <string>
+
 //Engine libraries
 #include "Node.h"
 
@@ -32,10 +34,10 @@ public:
 	Node* rootNode;	
 	
 	//Methods
-	void SceneGraph(void);
-	void ~SceneGraph(void);
+	SceneGraph(void);
+	~SceneGraph(void);
 	
-
+	Node* getNode(string nodeName);
 	
 };
 

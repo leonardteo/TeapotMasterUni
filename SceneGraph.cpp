@@ -12,7 +12,30 @@
 /**
  * Constructor
  */
-
 SceneGraph::SceneGraph(void)
 {
+	this->rootNode = new Node();
 }
+
+/**
+* getNode
+* Returns a pointer to a node with the name
+*/
+Node* SceneGraph::getNode(string nodeName)
+{
+	//Search each of the nodes and return the node
+	//@todo recursive search
+	return NULL;
+
+
+}
+
+
+/**
+* Destructor
+*/
+SceneGraph::~SceneGraph(void)
+{
+	delete this->rootNode;
+}
+
