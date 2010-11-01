@@ -15,10 +15,17 @@
 	#include <SDL.h>
 #endif
 
+#include "TeapotEngine.h"
+
 using namespace std;
 
-int width;
-int height;
+/**
+ Screen width & height 
+ **/
+const int WIDTH = 640;
+const int HEIGHT = 480;
+int width = WIDTH;
+int height = HEIGHT;
 
 static void resize(int, int);
 
@@ -81,6 +88,9 @@ static void DrawGLScene()
 }
 
 
+/**
+ Main Function
+ **/
 
 int main(int argc, char* argv[])
 {
@@ -97,8 +107,8 @@ int main(int argc, char* argv[])
 	SDL_WM_SetCaption("Hello World!", "Hello World!");
 
 	//Set openGL window
-	if ( SDL_SetVideoMode(640, 480, 32, SDL_OPENGL | SDL_RESIZABLE) == NULL ) {
-		cout << "Unable to create OpenGL screen: %s\n" << endl << SDL_GetError();
+	if ( SDL_SetVideoMode(width, height, 32, SDL_OPENGL | SDL_RESIZABLE) == NULL ) {
+		cout << "Unable to create OpenGL context: %s\n" << endl << SDL_GetError();
 		SDL_Quit();
 		exit(2);
 	}
