@@ -18,17 +18,14 @@ To DO:
 #include <fstream>
 #include <stdio.h>
 #include <string>
-#include <vector>
 
 //OpenGL libraries
 #ifdef __APPLE__
 #include <GLEW/GLEW.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+#include <GLUT/GLUT.h>
 #else
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>	
+#include <GL/glut.h>
 #endif
 
 //Teapot Engine Libraries

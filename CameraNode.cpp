@@ -9,7 +9,7 @@
 
 #include "CameraNode.h"
 
-CameraNode::CameraNode(CameraType cameraType) : Node()
+CameraNode::CameraNode(string id, CameraType cameraType) : Node(id)
 {
 	//Set node type
 	this->type = CAMERA;

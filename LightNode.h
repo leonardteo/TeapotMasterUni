@@ -2,17 +2,18 @@
 #define LIGHTNODE_H
 
 #include "Node.h"
+#include <list>
 
 //OpenGL libraries
 #ifdef __APPLE__
 #include <GLEW/GLEW.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+#include <GLUT/GLUT.h>
 #else
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>	
+#include <GL/glut.h>
 #endif
+
+using namespace std;
 
 enum LightType{
 	SPOTLIGHT, DIRECTIONAL, POINTLIGHT
@@ -21,11 +22,11 @@ enum LightType{
 class LightNode : public Node
 {
 public:
-	LightNode(GLenum id, LightType type);
+	LightNode(string id = "", GLenum lightId = GL_LIGHT0, LightType = POINTLIGHT);
 	~LightNode(void);
 
 	LightType type;
-	GLenum id;	
+	GLenum lightId;	
 
 	GLfloat ambient[4];
 	GLfloat diffuse[4];
@@ -38,6 +39,9 @@ public:
 	bool on;
 
 	void render(RenderType renderType = ALL_OBJECTS);
+	
+private:
+	bool debug;
 
 };
 

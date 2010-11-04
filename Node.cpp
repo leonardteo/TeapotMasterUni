@@ -8,21 +8,32 @@
 
 #include "Node.h"
 
+void Node::init()
+{
+	this->parent = NULL;
+	this->children = new list<Node*>;
+	this->scale = new Vector3(1.0f, 1.0f, 1.0f);
+	this->rotate = new Vector3();
+	this->translate = new Vector3();	
+}
+
 //Constructor
 Node::Node()
 {
-	this->parent = NULL;
-	this->children = new vector<Node*>;
-	this->scale = new Vector3(1.0f, 1.0f, 1.0f);
-	this->rotate = new Vector3();
-	this->translate = new Vector3();
-	this->id = "";			//Blank ID?
+	this->init();
+	this->id = "";			//Blank ID
+}
+
+Node::Node(string id)
+{
+	this->init();
+	this->id = id;
 }
 
 //Destructor
 Node::~Node()
 {
-	this->children->clear();	//Clear the vector
+	this->children->clear();	//Clear the list
 	delete this->children;
 	delete this->scale;
 	delete this->rotate;
@@ -50,9 +61,9 @@ void Node::setParent(Node* parent)
 //Abstract method for rendering - must be overloaded by child classes
 void Node::render(RenderType renderType)
 {	
-	for (int i=0; i<this->children->size(); i++)
+	for (list<Node*>::iterator child = this->children->begin(); child != this->children->end(); child++)
 	{
-		this->children->at(i)->render(renderType);
+		(*child)->render(renderType);
 	}
 }
 
@@ -77,4 +88,29 @@ void Node::setTranslation(float x, float y, float z)
 	this->translate->x = x;
 	this->translate->y = y; 
 	this->translate->z = z;
+}
+
+/**
+ Recursive depth first search
+ **/
+Node* Node::getNode(string str)
+{
+	cout << "Inside node: " << this->id << ". ";
+	
+	cout << "Comparing '" << str << "' to '" << this->id << "'. Result: " << str.compare(this->id) << endl;
+	
+	if (str.compare(this->id) == 0)
+	{
+		return this;
+	} else {
+		for (list<Node*>::iterator child = this->children->begin(); child != this->children->end(); child++)
+		{
+			Node* node = (*child)->getNode(str);
+			if (node != NULL)
+				return node;
+		}
+
+	}
+	
+	return NULL;
 }

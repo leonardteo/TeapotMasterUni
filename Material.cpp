@@ -9,17 +9,17 @@ Material::Material(void)
 	this->ambient[2] = 0.0f;
 	this->ambient[3] = 1.0f;
 
-	this->diffuse[0] = 0.9f;
-	this->diffuse[1] = 0.9f;
-	this->diffuse[2] = 0.9f;
+	this->diffuse[0] = 1.0f;
+	this->diffuse[1] = 1.0f;
+	this->diffuse[2] = 1.0f;
 	this->diffuse[3] = 1.0f;
 
-	this->specular[0] = 0.8f;
-	this->specular[1] = 0.8f;
-	this->specular[2] = 0.8f;
+	this->specular[0] = 0.0f;
+	this->specular[1] = 0.0f;
+	this->specular[2] = 0.0f;
 	this->specular[3] = 1.0f;
 
-	this->shininess[0] = 5.0f;
+	this->shininess[0] = 100.0f;
 
 }
 

@@ -7,27 +7,32 @@
  *
  */
 
+
+
 #ifndef TEAPOTENGINE_H
 #define TEAPOTENGINE_H
 
 //OpenGL libraries
 #ifdef __APPLE__
-#include <SDL/SDL.h>
 #include <GLEW/GLEW.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
 #include <GLUT/GLUT.h>
 #else
-#include <Windows.h>
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>	
-#include <SDL.h>
+#include <GL/glut.h>
 #endif
 
 #include <stdlib.h>
 
 #include "TeapotLevel.h"
+#include "OBJModel.h"
+#include "MyBitmap.h"
+#include "Node.h"
+#include "TransformNode.h"
+#include "PolyMeshNode.h"
+#include "Texture.h"
+#include "Vector3.h"
+#include "CameraNode.h"
+#include "LightNode.h"
 
 
 enum GameState {

@@ -9,11 +9,15 @@
 #include "PolyMeshNode.h"
 
 //Constructor
-PolyMeshNode::PolyMeshNode() : Node()
+PolyMeshNode::PolyMeshNode(string id) : Node(id)
 {
 	this->mesh = NULL;
 	this->texture = NULL;
-	this->material = NULL;
+	
+	//Create a default material and attach it
+	Material* material = new Material();
+	this->material = material;
+	
 }
 
 //Destructor
@@ -48,6 +52,7 @@ void PolyMeshNode::draw()
 	//Load texture
 	if (this->texture != NULL)
 	{
+		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, this->texture->textureID);
 	}
 
@@ -221,10 +226,11 @@ void PolyMeshNode::render(enum RenderType renderType)
 		
 
 		//Draw children
-		for (int i=0; i < this->children->size(); i++)
+		for (list<Node*>::iterator child = this->children->begin(); child != this->children->end(); child++)
 		{
-			this->children->at(i)->render(renderType);
+			(*child)->render(renderType);
 		}
+
 
 	glPopMatrix();	
 }

@@ -9,7 +9,7 @@
 
 #include "TransformNode.h"
 
-TransformNode::TransformNode(TransformType transformType)
+TransformNode::TransformNode(string id, TransformType transformType) : Node(id)
 {
 	this->type = TRANSFORM;
 	this->transformType = transformType;
@@ -40,10 +40,12 @@ void TransformNode::render(enum RenderType renderType)
 			break;
 	}
 	
-	for (int i=0; i<this->children->size(); i++)
+	//Render children
+	for (list<Node*>::iterator child = this->children->begin(); child != this->children->end(); child++)
 	{
-		this->children->at(i)->render(renderType);
+		(*child)->render();
 	}
+
 	
 	glPopMatrix();	
 	

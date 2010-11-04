@@ -1,12 +1,14 @@
 #include "LightNode.h"
 
 
-LightNode::LightNode(GLenum id, LightType type) : Node()
+LightNode::LightNode(string id, GLenum lightId, LightType type) : Node(id)
 {
 	this->type = type;
-	this->id = id;
+	this->lightId = lightId;
 	this->on = true;
 
+	this->debug = true;
+	
 	this->ambient[0] = 1.0f;
 	this->ambient[1] = 1.0f;
 	this->ambient[2] = 1.0f;
@@ -24,10 +26,10 @@ LightNode::LightNode(GLenum id, LightType type) : Node()
 
 	if (this->type == DIRECTIONAL)
 	{
-		//By default directional light shines from z=1
+		//By default directional light shines from z=-1
 		this->position[0] = 0.0f;
 		this->position[1] = 0.0f;
-		this->position[2] = 1.0f;
+		this->position[2] = -1.0f;
 		this->position[3] = 0.0f;
 
 		
@@ -52,6 +54,14 @@ LightNode::LightNode(GLenum id, LightType type) : Node()
 void LightNode::render(enum RenderType renderType)
 {
 
+	//Turn this on if it's on
+	if (this->on)
+	{	
+		glEnable(this->lightId);
+	} else {
+		glDisable(this->lightId);
+	}	
+	
 	//Do transformations
 	glPushMatrix();
 		glTranslatef(this->translate->x, this->translate->y, this->translate->z);
@@ -65,30 +75,65 @@ void LightNode::render(enum RenderType renderType)
 
 		glScalef(this->scale->x, this->scale->y, this->scale->z);
 		
-			//Do lighting
-			glLightfv(this->id, GL_AMBIENT, this->ambient);
-			glLightfv(this->id, GL_DIFFUSE, this->diffuse);
-			glLightfv(this->id, GL_SPECULAR, this->specular);
-			glLightfv(this->id, GL_POSITION, this->position);
+		//Do lighting
+		glLightfv(this->lightId, GL_AMBIENT, this->ambient);
+		glLightfv(this->lightId, GL_DIFFUSE, this->diffuse);
+		glLightfv(this->lightId, GL_SPECULAR, this->specular);
+		glLightfv(this->lightId, GL_POSITION, this->position);
 
+		if (this->type == SPOTLIGHT)
+		{
+			glLightf(this->lightId, GL_SPOT_CUTOFF, this->spotCutOff);
+			glLightfv(this->lightId, GL_SPOT_DIRECTION, this->spotDirection);
+		}
+		
+		//If debug, show the position of the light
+		if (this->debug)
+		{
+			glDisable(GL_LIGHTING);
+			glDisable(GL_TEXTURE_2D);
+			
+			glColor3f(this->diffuse[0], this->diffuse[1], this->diffuse[2]);
+			
+			if (this->type == POINTLIGHT)
+			{
+				glutSolidSphere(0.2f, 8, 8);
+			}
 			if (this->type == SPOTLIGHT)
 			{
-				glLightf(this->id, GL_SPOT_CUTOFF, this->spotCutOff);
-				glLightfv(this->id, GL_SPOT_DIRECTION, this->spotDirection);
+				glPushMatrix();
+					glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
+					glutWireCone(1.0f, 2.0f, 10, 1);		
+				glPopMatrix();
 			}
-
-			if (this->on)
+			if (this->type == DIRECTIONAL)
 			{
-				glEnable(this->id);
-			} else {
-				glDisable(this->id);
+				glBegin(GL_LINES);
+					glVertex3f(0.0f, 0.0f, 0.0f);
+					glVertex3f(0.0f, 0.0f, 1.0f);
+					glVertex3f(0.1f, 0.1f, 0.0f);
+					glVertex3f(0.1f, 0.1f, 1.0f);
+					glVertex3f(-0.1f, -0.1f, 0.0f);
+					glVertex3f(-0.1f, -0.1f, 1.0f);
+				glEnd();	
+				glPushMatrix();
+				glTranslatef(0.0f, 0.0f, 1.0f);
+				glutWireCone(0.2f, 1.0f, 5, 1);	
+				glPopMatrix();
+				
 			}
+			
+			glEnable(GL_TEXTURE_2D);
+			glEnable(GL_LIGHTING);
+		}
+		
 
 		//Draw children
-		for (int i=0; i < this->children->size(); i++)
+		for (list<Node*>::iterator child = this->children->begin(); child != this->children->end(); child++)
 		{
-			this->children->at(i)->render(renderType);
+			(*child)->render(renderType);
 		}
+
 
 	glPopMatrix();	
 

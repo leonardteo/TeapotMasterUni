@@ -15,12 +15,10 @@
 //OpenGL libraries
 #ifdef __APPLE__
 #include <GLEW/GLEW.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+#include <GLUT/GLUT.h>
 #else
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>	
+#include <GL/glut.h>
 #endif
 
 enum CameraProjection {
@@ -45,7 +43,7 @@ public:
 	CameraType cameraType;
 	
 	//Constructor/Destructor
-	CameraNode(CameraType);
+	CameraNode(string id = "", CameraType = FIRSTPERSON);
 	~CameraNode();
 
 	//@todo: Should these be private?

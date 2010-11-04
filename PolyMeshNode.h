@@ -9,6 +9,8 @@
 #ifndef POLYMESHNODE_H
 #define POLYMESHNODE_H
 
+#include <list>
+
 #include "Node.h"
 #include "OBJModel.h"
 #include "Texture.h"
@@ -17,13 +19,13 @@
 //OpenGL libraries
 #ifdef __APPLE__
 #include <GLEW/GLEW.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+#include <GLUT/GLUT.h>
 #else
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>	
+#include <GL/glut.h>
 #endif
+
+using namespace std;
 
 #define BUFFER_OFFSET(bytes) ((GLubyte*) NULL + (bytes))
 
@@ -32,7 +34,7 @@ class PolyMeshNode : public Node {
 public:
 
 	//Constructor/Destructor
-	PolyMeshNode();
+	PolyMeshNode(string id = "");
 	~PolyMeshNode();
 
 	//Attach model - note that this class does NOT load OBJModels. It attaches them so that you can have instances of models

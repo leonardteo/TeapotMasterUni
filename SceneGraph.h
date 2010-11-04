@@ -12,14 +12,13 @@
 #ifndef SCENEGRAPH_H
 #define SCENEGRAPH_H
 
+//OpenGL libraries
 #ifdef __APPLE__
 #include <GLEW/GLEW.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+#include <GLUT/GLUT.h>
 #else
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>	
+#include <GL/glut.h>
 #endif
 
 #include <string>
@@ -37,7 +36,10 @@ public:
 	SceneGraph(void);
 	~SceneGraph(void);
 	
+	//Retrieve a node based on its name
 	Node* getNode(string nodeName);
+	
+	void render(RenderType renderType = ALL_OBJECTS);
 	
 };
 

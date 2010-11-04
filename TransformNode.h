@@ -10,17 +10,20 @@
 #ifndef TRANSFORMNODE_H
 #define TRANSFORMNODE_H
 
+#include <list>
+
 #include "Node.h"
 
+//OpenGL libraries
 #ifdef __APPLE__
 #include <GLEW/GLEW.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+#include <GLUT/GLUT.h>
 #else
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>	
+#include <GL/glut.h>
 #endif
+
+using namespace std;
 
 enum TransformType {
 	TRANSLATE, SCALE, ROTATE
@@ -34,7 +37,7 @@ public:
 	TransformType transformType;
 	
 	//Methods
-	TransformNode(enum TransformType);
+	TransformNode(string id = "", enum TransformType = TRANSLATE);
 	~TransformNode();
 	void render(RenderType renderType = ALL_OBJECTS);
 	

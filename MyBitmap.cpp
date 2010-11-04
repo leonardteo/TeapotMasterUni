@@ -72,7 +72,7 @@ bool MyBitmap::loadBMP(const char *file) {
 
     //read in the entire BITMAPINFOHEADER
     fread(&bmih,sizeof(BitmapInfoHeader),1,in);
-	//cout << "sizeof(BitmapInfoHeader)=" << sizeof(BitmapInfoHeader) << endl;
+	cout << "sizeof(BitmapInfoHeader)=" << sizeof(BitmapInfoHeader) << endl;
 
     //save the width, height and bits per pixel for external use
     width=bmih.biWidth;

@@ -9,18 +9,16 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include <vector>
+#include <list>
 #include <string>
 
 //OpenGL libraries
 #ifdef __APPLE__
 #include <GLEW/GLEW.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+#include <GLUT/GLUT.h>
 #else
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>	
+#include <GL/glut.h>
 #endif
 
 #include "Vector3.h"
@@ -41,7 +39,7 @@ public:
 
 	//Data Members
 	NodeType type;				//The type of node this is
-	vector<Node*>* children;	//Child nodes
+	list<Node*>* children;	//Child nodes
 	Node* parent;				//The node's parent
 	string id;					//The node's ID so that we can search for a node
 	
@@ -52,12 +50,17 @@ public:
 
 	//Methods
 	Node();
+	Node(string id);
 	~Node();
 	void addChild(Node*);
 	void setParent(Node*);
 	void setTranslation(float x, float y, float z);
 	virtual void render(RenderType renderType = ALL_OBJECTS);
 	virtual void viewTransform();
+	Node* getNode(string str);
+	
+private:
+	void init();
 	
 };
 

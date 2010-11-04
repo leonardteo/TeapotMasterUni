@@ -14,7 +14,15 @@
  */
 SceneGraph::SceneGraph(void)
 {
-	this->rootNode = new Node();
+	this->rootNode = new Node("root");
+}
+
+/**
+ Render the scene
+ **/
+void SceneGraph::render(RenderType renderType)
+{
+	this->rootNode->render(renderType);
 }
 
 /**
@@ -23,11 +31,7 @@ SceneGraph::SceneGraph(void)
 */
 Node* SceneGraph::getNode(string nodeName)
 {
-	//Search each of the nodes and return the node
-	//@todo recursive search
-	return NULL;
-
-
+	return this->rootNode->getNode(nodeName);
 }
 
 

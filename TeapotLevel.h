@@ -11,22 +11,24 @@
 #ifndef TEAPOTLEVEL_H
 #define TEAPOTLEVEL_H
 
+//OpenGL libraries
 #ifdef __APPLE__
 #include <GLEW/GLEW.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+#include <GLUT/GLUT.h>
 #else
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>	
+#include <GL/glut.h>
 #endif
 
 class TeapotLevel
 {
 public:
+	//Data members
+	
+	
+	//Methods
 	TeapotLevel();
 	~TeapotLevel();
-	
 	
 	
 };

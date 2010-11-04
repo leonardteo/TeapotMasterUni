@@ -21,7 +21,7 @@ void Texture::loadTexture(const char* filename)
 {
 	this->textureMap = new MyBitmap(filename);
 	if (!this->textureMap->loaded){
-		cout << "Could not load texture." << endl;
+		cout << "Could not load texture. Error: " << this->textureMap->error << endl;
 		exit(0);
 	}
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
