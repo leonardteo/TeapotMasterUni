@@ -89,6 +89,7 @@ View transformations
 **/
 void CameraNode::viewTransform()
 {
+	
 	//If first person
 	if (this->cameraType == FIRSTPERSON){
 		//To do: Make this rotate on a local, orthonormal basis
@@ -121,4 +122,32 @@ void CameraNode::viewTransform()
 		this->parent->viewTransform();
 	}
 
+}
+
+/**
+ Get the camera's global position
+ **/
+Vector3 CameraNode::getPosition()
+{
+	glMatrixMode(GL_MODELVIEW);
+	
+	glPushMatrix();
+	glLoadIdentity();
+	
+	this->viewTransform();
+	
+	//Copy the current viewtransform to the modelview matrix4
+	float m[16];
+	glGetFloatv (GL_MODELVIEW_MATRIX, m);   
+	
+	glPopMatrix();
+	
+	//Invert the matrix
+	Matrix4 matrix(m);
+	Matrix4 inverseMatrix = matrix.inverse();
+	
+	Vector3 position(inverseMatrix.m[12], inverseMatrix.m[13], inverseMatrix.m[14]);
+	return position;
+	
+	
 }

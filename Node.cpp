@@ -58,13 +58,35 @@ void Node::setParent(Node* parent)
 	this->parent = parent;
 }
 
+//Abstract method for doing model transformation
+void Node::modelTransform()
+{
+	glTranslatef(this->translate->x, this->translate->y, this->translate->z);
+	
+	//This piece of code is not good because the order of rotation is actually important. 
+	//We need to figure out a way to rotate an entire local coordinate system.
+	//This should be relatively simple but we'll need to figure it out... 
+	glRotatef(this->rotate->z, 0.0f, 0.0f, 1.0f);
+	glRotatef(this->rotate->y, 0.0f, 1.0f, 0.0f);
+	glRotatef(this->rotate->x, 1.0f, 0.0f, 0.0f);
+	
+	glScalef(this->scale->x, this->scale->y, this->scale->z);
+}
+
 //Abstract method for rendering - must be overloaded by child classes
 void Node::render(RenderType renderType)
 {	
+	glPushMatrix();
+	
+	//Model transform
+	this->modelTransform();
+	
 	for (list<Node*>::iterator child = this->children->begin(); child != this->children->end(); child++)
 	{
 		(*child)->render(renderType);
 	}
+	
+	glPopMatrix();
 }
 
 //Abstract method for doing view transformations
@@ -95,10 +117,6 @@ void Node::setTranslation(float x, float y, float z)
  **/
 Node* Node::getNode(string str)
 {
-	cout << "Inside node: " << this->id << ". ";
-	
-	cout << "Comparing '" << str << "' to '" << this->id << "'. Result: " << str.compare(this->id) << endl;
-	
 	if (str.compare(this->id) == 0)
 	{
 		return this;
@@ -113,4 +131,43 @@ Node* Node::getNode(string str)
 	}
 	
 	return NULL;
+}
+
+
+/**
+ Function for getting the object space position of any node that's not a camera
+ Traverse up the tree until we're on the root node, then do a modeltransform all the way back down
+ **/
+Vector3 Node::getPosition()
+{
+	stack<Node*> nodes;	//Stack of node pointers
+	
+	//Upward traversal
+	Node* currentNode = this;
+	while (currentNode->parent != NULL)
+	{
+		nodes.push(currentNode);
+		currentNode = currentNode->parent;
+	}
+	
+	//For each element do a model transformation
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();			//Remember the current modelview matrix just in case
+	glLoadIdentity();		//Clear the modelview matrix
+	
+	while (!nodes.empty())
+	{
+		currentNode = nodes.top();
+		currentNode->modelTransform();
+		nodes.pop();
+	}
+	
+	//Get the matrix
+	float m[16];
+	glGetFloatv(GL_MODELVIEW_MATRIX, m);
+	
+	glPopMatrix();
+	
+	Vector3 returnVec(m[12], m[13], m[14]);
+	return returnVec;
 }

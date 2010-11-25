@@ -60,12 +60,10 @@ float fps=0.0f;
 char s[30];
 
 //Ball Stuff
-Vector3* ballVelocity;
-Vector3* upVector;
+float ballVelocity;		//The velocity of the ball
+Vector3 upVector(0.0f, 1.0f, 0.0f);		//Up direction
+Vector3 ballDirection;	//Current ball direction as a unit vector
 
-//Camera movements
-float camSpringElevation = 0.0f;	//Between -90 and 90
-float camSpringHeading = 0.0f;		//Between -90 and 90
 
 //Useful Math constants
 const float degreesToRadians = 0.0174532925f;
@@ -80,6 +78,46 @@ const float pi = 3.14159265f;
 //Measuring time in milliseconds
 int startTime;
 int prevTime;
+
+//Camera movements -- note that we are registering booleans to circumvent GLUT's slow keyboard response
+bool upPressed = false;
+bool downPressed = false;
+bool rightPressed = false;
+bool leftPressed = false;
+
+//Ball movements -- again, register the keystrokes to avoid GLUT weirdness
+bool wPressed = false; //forward
+bool sPressed = false; //back
+bool aPressed = false; //left
+bool dPressed = false; //right
+
+
+/**
+ Camera position stuff
+ **/
+void printCameraPosition()
+{
+	cout << endl;
+	Vector3 campos = ballCam->getPosition();
+	cout << "Camera position: " << campos << endl;
+	
+	Vector3 ballpos = sceneGraph->getNode("ball")->getPosition();
+	cout << "Ball position: " << ballpos << endl;
+	
+	Vector3 viewDirection = ballpos - campos;
+	cout << "View vector: " << viewDirection << endl;
+	
+	//Calculate right vector
+	Vector3 rightVector = viewDirection.crossProduct(upVector);
+	cout << "Right vector: " << rightVector << endl;
+	
+	//Calculate direction vector
+	ballDirection = upVector.crossProduct(rightVector);
+	ballDirection.normalize();
+	cout << "Direction: " << ballDirection << endl;
+	
+}
+
 
 
 /**
@@ -138,32 +176,42 @@ static void animate(int value)
 	int elapsedTime = currTime - startTime;
 	
 	
-	//Decrement the camera spring coefficient
-	if (camSpringHeading > 0.0f)
+	//Camera movements
+	if (upPressed)
 	{
-		camSpringHeading--;
-		if (camSpringHeading < 0.0f)
-			camSpringHeading = 0.0f;
-	} else {
-		camSpringHeading++;
-		if (camSpringHeading > 0.0f)
-			camSpringHeading = 0.0f;
+		ballCam->elevation += 4.0f;
 	}
-
-	if (camSpringElevation > 0.0f)
+	if (downPressed)
 	{
-		camSpringElevation--;
-		if (camSpringElevation < 0.0f)
-			camSpringElevation = 0.0f;
-	} else {
-		camSpringElevation++;
-		if (camSpringElevation > 0.0f)
-			camSpringElevation = 0.0f;
+		ballCam->elevation -= 4.0f;
+	}
+	if (leftPressed)
+	{
+		ballCam->azimuth += 4.0f;
+	}
+	if (rightPressed)
+	{
+		ballCam->azimuth -= 4.0f;
 	}
 	
+	//Error checks to make sure we're in range
+	if (ballCam->elevation > 90.0f)
+	{
+		ballCam->elevation = 90.0f;
+	}
+	if (ballCam->elevation < 0.0f)
+	{
+		ballCam->elevation = 0.0f;
+	}
+	if (ballCam->azimuth > 360.0f)
+	{
+		ballCam->azimuth -= 360.0f;
+	}
+	if (ballCam->azimuth < 0.0f)
+	{
+		ballCam->azimuth += 360.0f;
+	}
 	
-	
-	cout << "Time: " << currTime << " Heading: " << camSpringHeading << endl;
 	
 	//Decrement the velocity of the ball
 	
@@ -194,7 +242,27 @@ static void display()
 	//Draw a grid for reference
 	grid.display(1);
 	
+	//Draw the ball direction for debugging
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glPushMatrix();
+	
+	Vector3 ballPosition = sceneGraph->getNode("ball")->getPosition();
+	glTranslatef(ballPosition.x, ballPosition.y, ballPosition.z);
+	
+	glBegin(GL_LINES);
+		glVertex3f(0.0f, 0.0f, 0.0f);
+		glVertex3f(5 * ballDirection.x, 5* ballDirection.y, 5* ballDirection.z);
+	glEnd();
+	
+	glPopMatrix();
+	glEnable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+	
 	sceneGraph->render();
+	
+
 		
 	profiler();
 	
@@ -222,20 +290,29 @@ static void reshape(int new_width, int new_height)
 /** 
  Keyboard Input
  **/
-static void keyboard_func(unsigned char key, int mx, int my)
+static void keyboard(unsigned char key, int mx, int my)
 {
 	switch (key)
 	{
 			
 		case 'w':	//move ball forward
+			wPressed = true;
 			break;
 		case 's':	//move ball back
+			sPressed = true;
 			break;
 		case 'a':	//move ball left
+			aPressed = true;
 			break;
 		case 'd':	//move ball right
+			dPressed = true;
 			break;
 			
+			
+		case 'p':
+			printCameraPosition();
+			break;
+
 			
 			//Exit
 		case 27:
@@ -243,6 +320,25 @@ static void keyboard_func(unsigned char key, int mx, int my)
 	}
 	
 	glutPostRedisplay();
+}
+
+static void keyboardUp(unsigned char key, int mx, int my)
+{
+	switch (key)
+	{
+		case 'w':
+			wPressed = false;
+			break;
+		case 'a':
+			aPressed = false;
+			break;
+		case 's':
+			sPressed = false;
+			break;
+		case 'd':
+			dPressed = false;
+			break;
+	}
 }
 
 /**
@@ -254,24 +350,46 @@ static void functionKeys(int key, int mx, int my)
 	{
 		//Camera movement
 		case GLUT_KEY_LEFT:
-			camSpringHeading += 3.0f;
-			if (camSpringHeading > 90.0f)
-				camSpringHeading = 90.0f;
-			
-			ballCam->azimuth += 50*sin(camSpringHeading*degreesToRadians);
+			leftPressed = true;
 			break;
 		case GLUT_KEY_RIGHT:
-			ballCam->azimuth -= 5.0f;
+			rightPressed = true;
 			break;
 		case GLUT_KEY_UP:
-			ballCam->elevation += 5.0f;
+			upPressed = true;
 			break;
 		case GLUT_KEY_DOWN:
-			ballCam->elevation -= 5.0f;
+			downPressed = true;
 			break;
 	}
 
 	glutPostRedisplay();
+}
+
+
+/**
+ Function keys up
+ **/
+static void functionKeysUp(int key, int mx, int my)
+{
+	switch (key)
+	{
+		//Camera movement
+		case GLUT_KEY_LEFT:
+			leftPressed = false;
+			break;
+		case GLUT_KEY_RIGHT:
+			rightPressed = false;
+			break;
+		case GLUT_KEY_UP:
+			upPressed = false;
+			break;
+		case GLUT_KEY_DOWN:
+			downPressed = false;
+			break;
+	}
+	glutPostRedisplay();
+	
 }
 
 /**
@@ -336,10 +454,13 @@ static void init()
 	OBJModel* ball = new OBJModel("models/ball.obj");
 	PolyMeshNode* ballNode = new PolyMeshNode("ball");
 	ballNode->translate->y = 1.0f;
+	ballNode->translate->x = 5.0f;
+	ballNode->translate->z = 5.0f;
 	ballNode->attachModel(ball);
 	Texture* ballTexture = new Texture("textures/star.bmp");
 	ballNode->attachTexture(ballTexture);
-	 
+	
+	
 	
 	//Create a default light
 	LightNode* lightNode = new LightNode("light", GL_LIGHT0, DIRECTIONAL);
@@ -352,6 +473,7 @@ static void init()
 	sceneGraph->rootNode->addChild(ballNode);
 	sceneGraph->rootNode->addChild(lightNode);
 	
+
 	ballCam = new CameraNode("ballcam", POLAR);
 	ballCam->distance = 10.0f;
 	ballCam->elevation = 40.0f;
@@ -365,13 +487,6 @@ static void init()
 	 */
 	
 	//Initialize other variables
-	ballVelocity = new Vector3();
-	
-	upVector = new Vector3(0.0f, 1.0f, 0.0f);
-	Vector3* rightVector = new Vector3(1.0f, 0.0f, 0.0f);
-	Vector3* zVector = rightVector->crossProduct(upVector);
-	cout << "ZVector: " << zVector << endl;
-	
 	
 }
 
@@ -421,8 +536,10 @@ int main(int argc, char** argv)
 	init();
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
-	glutKeyboardFunc(keyboard_func);
+	glutKeyboardFunc(keyboard);
+	glutKeyboardUpFunc(keyboardUp);
 	glutSpecialFunc(functionKeys);
+	glutSpecialUpFunc(functionKeysUp);
 	glutMouseFunc(mouse_clicks);
 	glutMotionFunc(mouse_move);
 	

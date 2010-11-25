@@ -10,6 +10,7 @@
 #define NODE_H
 
 #include <list>
+#include <stack>
 #include <string>
 
 //OpenGL libraries
@@ -58,6 +59,8 @@ public:
 	virtual void render(RenderType renderType = ALL_OBJECTS);
 	virtual void viewTransform();
 	Node* getNode(string str);
+	Vector3 getPosition();
+	void modelTransform();
 	
 private:
 	void init();

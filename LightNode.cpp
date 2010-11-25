@@ -64,17 +64,10 @@ void LightNode::render(enum RenderType renderType)
 	
 	//Do transformations
 	glPushMatrix();
-		glTranslatef(this->translate->x, this->translate->y, this->translate->z);
-
-		//This piece of code is not good because the order of rotation is actually important. 
-		//We need to figure out a way to rotate an entire local coordinate system.
-		//This should be relatively simple but we'll need to figure it out... 
-		glRotatef(this->rotate->z, 0.0f, 0.0f, 1.0f);
-		glRotatef(this->rotate->y, 0.0f, 1.0f, 0.0f);
-		glRotatef(this->rotate->x, 1.0f, 0.0f, 0.0f);
-
-		glScalef(this->scale->x, this->scale->y, this->scale->z);
 		
+		//Model transform
+		this->modelTransform();
+	
 		//Do lighting
 		glLightfv(this->lightId, GL_AMBIENT, this->ambient);
 		glLightfv(this->lightId, GL_DIFFUSE, this->diffuse);

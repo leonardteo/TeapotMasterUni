@@ -18,33 +18,69 @@ Vector3::~Vector3(void)
 {
 }
 
-Vector3* Vector3::crossProduct(Vector3* in)
+Vector3 Vector3::crossProduct(Vector3 in)
 {
-	Vector3* out = new Vector3();
+	Vector3 out;
 	
-	out->x = (this->y * in->z) - (this->z * in->y);
-	out->y = (this->z * in->x) - (this->x * in->z);
-	out->z = (this->x * in->y) - (this->y * in->x);
+	out.x = (this->y * in.z) - (this->z * in.y);
+	out.y = (this->z * in.x) - (this->x * in.z);
+	out.z = (this->x * in.y) - (this->y * in.x);
 	
 	return out;
 }
 
 float Vector3::length()
 {
-	return sqrt((this->x * this->x) + (this->y * this->y) + (this->z + this->z));
+	return sqrt(pow(this->x, 2) + pow(this->y, 2) + pow(this->z, 2));
 }
 
 void Vector3::normalize()
 {
-	if (this->length() > 0.0f || this->length() < 0.0f){
-		this->x = this->x/length();
-		this->y = this->y/length();
-		this->z = this->z/length();
+	float length = this->length();
+	
+	if (length > 0.0f || length < 0.0f){
+		
+		this->x = this->x/length;
+		this->y = this->y/length;
+		this->z = this->z/length;
 	}
 }
 
+
+
 //Overloaded << operator
 std::ostream& operator<<(std::ostream& output, const Vector3* v) {
-	output << "(" <<  v->x << ", " << v->y <<", " << v->z << ")";
+	output << setprecision(3) << fixed << "(" <<  v->x << ", " << v->y <<", " << v->z << ")";
     return output;  // for multiple << operators.
+}
+
+
+//Overloaded << operator
+std::ostream& operator<<(std::ostream& output, const Vector3 v) {
+	output << setprecision(3) << fixed << "(" <<  v.x << ", " << v.y <<", " << v.z << ")";
+    return output;  // for multiple << operators.
+}
+
+//Overloaded + operator
+Vector3 Vector3::operator+ (Vector3 in)
+{
+	return Vector3(this->x + in.x, this->y + in.y, this->z + in.z);
+}
+
+//Overloaded - operator
+Vector3 Vector3::operator- (Vector3 in)
+{
+	return Vector3(this->x - in.x, this->y - in.y, this->z - in.z);
+}
+
+//Overloaded * operator
+Vector3 Vector3::operator* (float scalar)
+{
+	return Vector3(this->x * scalar, this->y * scalar, this->z * scalar);
+}
+
+//Overloaded / operator
+Vector3 Vector3::operator/ (float scalar)
+{
+	return Vector3(this->x / scalar, this->y / scalar, this->z / scalar);
 }

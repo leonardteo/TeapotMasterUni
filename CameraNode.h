@@ -11,6 +11,7 @@
 #define CAMERANODE_H
 
 #include "Node.h"
+#include "Matrix4.h"
 
 //OpenGL libraries
 #ifdef __APPLE__
@@ -79,6 +80,12 @@ public:
 	//Methods
 	void setProjection(int width, int height);
 	void viewTransform();
+	
+	Vector3 getPosition();
+
+private:
+
+	
 };
 
 #endif
