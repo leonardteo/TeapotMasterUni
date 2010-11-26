@@ -11,8 +11,15 @@
 
 Matrix4::Matrix4()
 {
-	for (int i=0; i<16; i++)
-		this->m[i] = 0.0f;	
+	this->loadIdentity();
+}
+
+void Matrix4::loadIdentity()
+{
+	this->m[0] = 1.0f;	this->m[4] = 0.0f;	this->m[8] = 0.0f;	this->m[12] = 0.0f;
+	this->m[1] = 0.0f;	this->m[5] = 1.0f;	this->m[9] = 0.0f;	this->m[13] = 0.0f;
+	this->m[2] = 0.0f;	this->m[6] = 0.0f;	this->m[10] = 1.0f;	this->m[14] = 0.0f;
+	this->m[3] = 0.0f;	this->m[7] = 0.0f;	this->m[11] = 0.0f;	this->m[15] = 1.0f;
 }
 
 Matrix4::Matrix4(float in[16])

@@ -13,6 +13,8 @@
 #include <list>
 
 #include "Node.h"
+#include "Vector3.h"
+#include "Matrix4.h"
 
 //OpenGL libraries
 #ifdef __APPLE__
@@ -26,7 +28,7 @@
 using namespace std;
 
 enum TransformType {
-	TRANSLATE, SCALE, ROTATE
+	TRANSLATE, SCALE, ROTATE, BALLROTATE
 };	
 
 class TransformNode : public Node 
@@ -35,10 +37,14 @@ class TransformNode : public Node
 public:
 	//Data members
 	TransformType transformType;
+	Vector3 ballAxis;
+	float ballAngleDisplacement;
+	Matrix4 ballRotationMatrix;
 	
 	//Methods
 	TransformNode(string id = "", enum TransformType = TRANSLATE);
 	~TransformNode();
+	void rotateBall(Vector3 axis, float angle);
 	void render(RenderType renderType = ALL_OBJECTS);
 	
 };

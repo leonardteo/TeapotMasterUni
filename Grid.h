@@ -22,5 +22,5 @@ class Grid{
 public:
 	//Grid();
 	//~Grid();
-	void display(float scale = 1);
+	void display(float scale = 1, int n=48);
 };

@@ -34,6 +34,8 @@ public:
 	//length/distance
 	float length();
 
+	void zero();
+
 	//Overload the << operator for easily debugging values
 	friend std::ostream& operator<<(std::ostream& output, const Vector3* v);
 	friend std::ostream& operator<<(std::ostream& output, const Vector3 v);

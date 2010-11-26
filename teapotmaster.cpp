@@ -60,17 +60,20 @@ float fps=0.0f;
 char s[30];
 
 //Ball Stuff
-float ballVelocity;		//The velocity of the ball
+TransformNode* ballPositionNode;
+TransformNode* ballRotationNode;
+int ballVelocity = 0;		//The velocity of the ball
 Vector3 upVector(0.0f, 1.0f, 0.0f);		//Up direction
-Vector3 ballDirection;	//Current ball direction as a unit vector
-
+Vector3 forwardVector;
+Vector3 velocityVec;
+const float ballCircumference = 31.415926535897932384626433832795f;
 
 //Useful Math constants
 const float degreesToRadians = 0.0174532925f;
 const float radiansToDegrees = 57.2957795f;
 const float pi = 3.14159265f;
 
-#define TIMERMSECS 33
+#define TIMERMSECS 16.666666666666666666666666666667
 #define PI 3.14159265f
 #define RADIANSTODEGREES 57.2957795f
 #define DEGREESTORADIANS 0.0174532925f
@@ -92,33 +95,17 @@ bool aPressed = false; //left
 bool dPressed = false; //right
 
 
-/**
- Camera position stuff
- **/
-void printCameraPosition()
+
+/** 
+DebugText
+Write anything I want to cout
+**/
+void debug()
 {
-	cout << endl;
-	Vector3 campos = ballCam->getPosition();
-	cout << "Camera position: " << campos << endl;
-	
-	Vector3 ballpos = sceneGraph->getNode("ball")->getPosition();
-	cout << "Ball position: " << ballpos << endl;
-	
-	Vector3 viewDirection = ballpos - campos;
-	cout << "View vector: " << viewDirection << endl;
-	
-	//Calculate right vector
-	Vector3 rightVector = viewDirection.crossProduct(upVector);
-	cout << "Right vector: " << rightVector << endl;
-	
-	//Calculate direction vector
-	ballDirection = upVector.crossProduct(rightVector);
-	ballDirection.normalize();
-	cout << "Direction: " << ballDirection << endl;
-	
+	//Rotation Matrix
+	cout << "Rotation matrix: " << endl;
+	ballRotationNode->ballRotationMatrix.print();
 }
-
-
 
 /**
  Write text to screen
@@ -161,10 +148,12 @@ static void profiler()
 	
 }
 
+
 /**
  Animation
+ //Note that the value input here is not used
  **/
-static void animate(int value)
+static void animate(int val)
 {
 	
 	// Set up the next timer tick (do this first)	
@@ -179,19 +168,19 @@ static void animate(int value)
 	//Camera movements
 	if (upPressed)
 	{
-		ballCam->elevation += 4.0f;
+		ballCam->elevation -= 4.0f;
 	}
 	if (downPressed)
 	{
-		ballCam->elevation -= 4.0f;
+		ballCam->elevation += 4.0f;
 	}
 	if (leftPressed)
 	{
-		ballCam->azimuth += 4.0f;
+		ballCam->azimuth -= 4.0f;
 	}
 	if (rightPressed)
 	{
-		ballCam->azimuth -= 4.0f;
+		ballCam->azimuth += 4.0f;
 	}
 	
 	//Error checks to make sure we're in range
@@ -212,11 +201,82 @@ static void animate(int value)
 		ballCam->azimuth += 360.0f;
 	}
 	
+	/****
+	Handle ball animation input
+	*****/
 	
-	//Decrement the velocity of the ball
+	//Calculate forward vector
+	Vector3 ballpos = ballPositionNode->getPosition();	//Get position of ball
+	Vector3 campos = ballCam->getPosition();
+	Vector3 viewNormal = ballpos - campos;
+
+	//Calculate Movement vectors
+	Vector3 rightVector = viewNormal.crossProduct(upVector);
+	rightVector.normalize();
+	Vector3 forwardVector = upVector.crossProduct(rightVector);
+	forwardVector.normalize();
+	Vector3 backVector = rightVector.crossProduct(upVector);
+	backVector.normalize();
+	Vector3 leftVector = upVector.crossProduct(viewNormal);
+	leftVector.normalize();
+	Vector3 newPosition;
+
+	//Calculate new position of the ball based on the velocity
+	newPosition = ballpos + velocityVec;
+
+	if (wPressed)	//w key is pressed. Move forward
+	{
+		newPosition = newPosition + (forwardVector/20);
+	}
+	if (sPressed)
+	{
+		newPosition = newPosition + (backVector/20);
+	}
+	if (dPressed)
+	{
+		newPosition = newPosition + (rightVector/20);
+	}
+	if (aPressed)
+	{
+		newPosition = newPosition + (leftVector/20);
+	}
+
+	//Calculate the velocity vector
+	velocityVec = newPosition - ballpos;
+
+	//Limit the speed. If the velocity is greater than the speed limit, set it back, and recalculate the new position
+	if (velocityVec.length() > 1.0f)
+	{
+		velocityVec.normalize();
+		newPosition = ballpos + velocityVec;
+	}
 	
+	//Set ball Position
+	ballPositionNode->setTranslation(newPosition.x, newPosition.y, newPosition.z);
+		
+	/**
+	Ball Rotation
+	**/
+	float distance = velocityVec.length();
+	float ballAngularDisplacement = (distance / ballCircumference) * 360.0f;
+	
+	//Calculate axis of rotation
+	Vector3 rotationAxis = upVector.crossProduct(velocityVec);
+	rotationAxis.normalize();
+	ballRotationNode->rotateBall(rotationAxis, ballAngularDisplacement);
+
+
+	//Reduce velocity vector
+	Vector3 velocityVecNormalized = velocityVec;
+	velocityVecNormalized.normalize();
+	velocityVec = velocityVecNormalized * (velocityVec.length() - 0.025);
+	if (velocityVec.length() < 0.001) velocityVec.zero();
+
+
+	//Post redisplay
 	glutPostRedisplay();
 	
+	//Reset the timer
 	prevTime = currTime;
 	
 }
@@ -240,26 +300,11 @@ static void display()
 	ballCam->viewTransform();
 	
 	//Draw a grid for reference
-	grid.display(1);
+	grid.display(4);
 	
-	//Draw the ball direction for debugging
-	glDisable(GL_LIGHTING);
-	glDisable(GL_TEXTURE_2D);
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glPushMatrix();
-	
-	Vector3 ballPosition = sceneGraph->getNode("ball")->getPosition();
-	glTranslatef(ballPosition.x, ballPosition.y, ballPosition.z);
-	
-	glBegin(GL_LINES);
-		glVertex3f(0.0f, 0.0f, 0.0f);
-		glVertex3f(5 * ballDirection.x, 5* ballDirection.y, 5* ballDirection.z);
-	glEnd();
-	
-	glPopMatrix();
-	glEnable(GL_LIGHTING);
-	glEnable(GL_TEXTURE_2D);
-	
+
+
+
 	sceneGraph->render();
 	
 
@@ -307,19 +352,17 @@ static void keyboard(unsigned char key, int mx, int my)
 		case 'd':	//move ball right
 			dPressed = true;
 			break;
-			
-			
-		case 'p':
-			printCameraPosition();
-			break;
 
+		case 'p':
+			debug();
+			break;
+			
 			
 			//Exit
 		case 27:
 			exit(0);
 	}
 	
-	glutPostRedisplay();
 }
 
 static void keyboardUp(unsigned char key, int mx, int my)
@@ -363,7 +406,6 @@ static void functionKeys(int key, int mx, int my)
 			break;
 	}
 
-	glutPostRedisplay();
 }
 
 
@@ -388,7 +430,7 @@ static void functionKeysUp(int key, int mx, int my)
 			downPressed = false;
 			break;
 	}
-	glutPostRedisplay();
+
 	
 }
 
@@ -451,15 +493,18 @@ static void init()
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 
 	//Load models
-	OBJModel* ball = new OBJModel("models/ball.obj");
-	PolyMeshNode* ballNode = new PolyMeshNode("ball");
-	ballNode->translate->y = 1.0f;
-	ballNode->translate->x = 5.0f;
-	ballNode->translate->z = 5.0f;
-	ballNode->attachModel(ball);
+	OBJModel* ballOBJ = new OBJModel("models/ball.obj");
+	PolyMeshNode* ballMeshNode = new PolyMeshNode("ball");
+	ballMeshNode->attachModel(ballOBJ);
 	Texture* ballTexture = new Texture("textures/star.bmp");
-	ballNode->attachTexture(ballTexture);
-	
+	ballMeshNode->attachTexture(ballTexture);
+
+	ballRotationNode = new TransformNode("ballRotation", BALLROTATE);
+	ballRotationNode->addChild(ballMeshNode);
+
+	ballPositionNode = new TransformNode("ballPosition", TRANSLATE);
+	ballPositionNode->setTranslation(0.0f, 5.0f, 0.0f);
+	ballPositionNode->addChild(ballRotationNode);
 	
 	
 	//Create a default light
@@ -470,23 +515,16 @@ static void init()
 	
 	//Scene Graph
 	sceneGraph = new SceneGraph();
-	sceneGraph->rootNode->addChild(ballNode);
 	sceneGraph->rootNode->addChild(lightNode);
+	sceneGraph->rootNode->addChild(ballPositionNode);
 	
 
 	ballCam = new CameraNode("ballcam", POLAR);
-	ballCam->distance = 10.0f;
+	ballCam->distance = 40.0f;
 	ballCam->elevation = 40.0f;
-	ballNode->addChild(ballCam);
+	ballPositionNode->addChild(ballCam);
 	
-	/*
-	sgCamera = new CameraNode("camera", POLAR);
-	sgCamera->distance = 30.0f;
-	sgCamera->azimuth = 0.0f;
-	sgCamera->elevation = 40.0f;
-	 */
-	
-	//Initialize other variables
+
 	
 }
 
@@ -542,6 +580,7 @@ int main(int argc, char** argv)
 	glutSpecialUpFunc(functionKeysUp);
 	glutMouseFunc(mouse_clicks);
 	glutMotionFunc(mouse_move);
+	//glutIdleFunc(animate);
 	
 	// Start the timer
     glutTimerFunc(TIMERMSECS, animate, 0);

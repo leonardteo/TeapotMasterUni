@@ -10,9 +10,9 @@
 #include "Grid.h"
 
 /**
- Draw a 24x24 grid
+ Draw a grid
  **/
-void Grid::display(float scale)
+void Grid::display(float scale, int n)
 {
 	//Turn off lighting for grid
 	glDisable(GL_LIGHTING);
@@ -21,16 +21,16 @@ void Grid::display(float scale)
 	//Start drawing lines
 	glBegin(GL_LINES);
 	glColor3f(0.5, 0.5, 0.5);
-	for (int x=-12; x<=12; x++){
+	for (int x=-n/2; x<=n/2; x++){
 		if (x != 0){
-			glVertex3f((GLfloat)(x*scale), (GLfloat)0.0, (GLfloat)(-12*scale));
-			glVertex3f((GLfloat)(x*scale), (GLfloat)0.0, (GLfloat)(12*scale));
+			glVertex3f((GLfloat)(x*scale), (GLfloat)0.0, (GLfloat)((-n/2)*scale));
+			glVertex3f((GLfloat)(x*scale), (GLfloat)0.0, (GLfloat)((n/2)*scale));
 		}
 	}
-	for (int z=-12; z<=12; z++){
+	for (int z=-n/2; z<=n/2; z++){
 		if (z != 0){
-			glVertex3f((GLfloat)(-12*scale), (GLfloat)0.0, (GLfloat)(z*scale));
-			glVertex3f((GLfloat)(12*scale), (GLfloat)0.0, (GLfloat)(z*scale));
+			glVertex3f((GLfloat)(-(n/2)*scale), (GLfloat)0.0, (GLfloat)(z*scale));
+			glVertex3f((GLfloat)((n/2)*scale), (GLfloat)0.0, (GLfloat)(z*scale));
 		}
 	}
 	glEnd();
@@ -51,12 +51,12 @@ void Grid::display(float scale)
 	//x axis should be red and pointing to positive x
 	glColor3f(1.0, 0.0, 0.0);
 	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(12*scale, 0.0, 0.0);
+	glVertex3f(5*scale, 0.0, 0.0);
 	glEnd();
 	
 	//Draw cone
 	glPushMatrix();
-	glTranslatef(12*scale, 0.0, 0.0);
+	glTranslatef(5*scale, 0.0, 0.0);
 	glRotatef(90, 0.0, 1.0, 0.0);
 	glutSolidCone(0.2, 0.75, 8, 3);
 	glPopMatrix();
@@ -65,12 +65,12 @@ void Grid::display(float scale)
 	//y axis
 	glColor3f(0.0, 1.0, 0.0);
 	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(0.0, 12*scale, 0.0);
+	glVertex3f(0.0, 5*scale, 0.0);
 	glEnd();
 	
 	//Draw cone
 	glPushMatrix();
-	glTranslatef(0.0, 12*scale, 0.0);
+	glTranslatef(0.0, 5*scale, 0.0);
 	glRotatef(-90, 1.0, 0.0, 0.0);
 	glutSolidCone(0.2, 0.75, 8, 3);
 	glPopMatrix();
@@ -79,12 +79,12 @@ void Grid::display(float scale)
 	//z axis
 	glColor3f(0.0, 0.0, 1.0);
 	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(0.0, 0.0, 12*scale);
+	glVertex3f(0.0, 0.0, 5*scale);
 	glEnd();	
 	
 	//Draw cone
 	glPushMatrix();
-	glTranslatef(0.0, 0.0, 12*scale);
+	glTranslatef(0.0, 0.0, 5*scale);
 	glutSolidCone(0.2, 0.75, 8, 3);
 	glPopMatrix();
 		

@@ -13,10 +13,17 @@ TransformNode::TransformNode(string id, TransformType transformType) : Node(id)
 {
 	this->type = TRANSFORM;
 	this->transformType = transformType;
+	this->ballAngleDisplacement = 0.0f;
 }
 
 TransformNode::~TransformNode()
 {
+}
+
+void TransformNode::rotateBall(Vector3 axis, float angle)
+{
+	this->ballAxis = axis;
+	this->ballAngleDisplacement = angle;
 }
 
 //Do all translations then render child nodes
@@ -38,6 +45,22 @@ void TransformNode::render(enum RenderType renderType)
 		case SCALE:
 			glScalef((GLfloat)this->scale->x, (GLfloat)this->scale->y, (GLfloat)this->scale->z);
 			break;
+		case BALLROTATE:
+
+			glRotatef((GLfloat)this->ballAngleDisplacement, (GLfloat)this->ballAxis.x, (GLfloat)this->ballAxis.y, (GLfloat)this->ballAxis.z);
+			glMultMatrixf(this->ballRotationMatrix.m);
+
+			//Save just the rotation matrix for the glRotate
+			glPushMatrix();
+				glLoadIdentity();
+				glRotatef((GLfloat)this->ballAngleDisplacement, (GLfloat)this->ballAxis.x, (GLfloat)this->ballAxis.y, (GLfloat)this->ballAxis.z);
+				glMultMatrixf(this->ballRotationMatrix.m);
+				
+				glGetFloatv(GL_MODELVIEW_MATRIX, this->ballRotationMatrix.m);	//Save the current matrix
+			glPopMatrix();
+			
+			break;
+
 	}
 	
 	//Render children

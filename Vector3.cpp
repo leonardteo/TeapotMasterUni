@@ -84,3 +84,10 @@ Vector3 Vector3::operator/ (float scalar)
 {
 	return Vector3(this->x / scalar, this->y / scalar, this->z / scalar);
 }
+
+void Vector3::zero()
+{
+	this->x = 0.0f;
+	this->y = 0.0f;
+	this->z = 0.0f;
+}
