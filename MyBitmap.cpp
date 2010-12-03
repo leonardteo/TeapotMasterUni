@@ -48,7 +48,7 @@ bool MyBitmap::loadBMP(const char *file) {
         delete[] data;
     }
 
-	cout << "Loading bitmap file: " << file << endl;
+	//cout << "Loading bitmap file: " << file << endl;
 
     //open the file for reading in binary mode
     in=fopen(file,"rb");
@@ -72,7 +72,7 @@ bool MyBitmap::loadBMP(const char *file) {
 
     //read in the entire BITMAPINFOHEADER
     fread(&bmih,sizeof(BitmapInfoHeader),1,in);
-	cout << "sizeof(BitmapInfoHeader)=" << sizeof(BitmapInfoHeader) << endl;
+	//cout << "sizeof(BitmapInfoHeader)=" << sizeof(BitmapInfoHeader) << endl;
 
     //save the width, height and bits per pixel for external use
     width=bmih.biWidth;

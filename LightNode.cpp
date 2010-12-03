@@ -48,6 +48,7 @@ LightNode::LightNode(string id, GLenum lightId, LightType type) : Node(id)
 
 	this->spotCutOff = 45.0f;
 
+	this->intensity = 1.0f;
 }
 
 
@@ -69,9 +70,21 @@ void LightNode::render(enum RenderType renderType)
 		this->modelTransform();
 	
 		//Do lighting
-		glLightfv(this->lightId, GL_AMBIENT, this->ambient);
-		glLightfv(this->lightId, GL_DIFFUSE, this->diffuse);
-		glLightfv(this->lightId, GL_SPECULAR, this->specular);
+		
+		//Calculate all color values based on intensity
+		GLfloat ambient[4];
+		GLfloat diffuse[4];
+		GLfloat specular[4];
+		for (int i=0; i<4; i++)
+		{
+			ambient[i] = this->intensity * this->ambient[i];
+			diffuse[i] = this->intensity * this->diffuse[i];
+			specular[i] = this->intensity * this->specular[i];
+		}
+		
+		glLightfv(this->lightId, GL_AMBIENT, ambient);
+		glLightfv(this->lightId, GL_DIFFUSE, diffuse);
+		glLightfv(this->lightId, GL_SPECULAR, specular);
 		glLightfv(this->lightId, GL_POSITION, this->position);
 
 		if (this->type == SPOTLIGHT)
@@ -90,7 +103,7 @@ void LightNode::render(enum RenderType renderType)
 			
 			if (this->type == POINTLIGHT)
 			{
-				glutSolidSphere(0.2f, 8, 8);
+				glutSolidSphere(1.0f, 8, 8);
 			}
 			if (this->type == SPOTLIGHT)
 			{

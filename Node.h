@@ -23,6 +23,7 @@
 #endif
 
 #include "Vector3.h"
+#include "Shader.h"
 
 using namespace std;
 
@@ -43,6 +44,9 @@ public:
 	list<Node*>* children;	//Child nodes
 	Node* parent;				//The node's parent
 	string id;					//The node's ID so that we can search for a node
+
+	//Shader
+	Shader* shader;
 	
 	//Local Transforms
 	Vector3* scale;				//Local scaling	
@@ -61,6 +65,7 @@ public:
 	Node* getNode(string str);
 	Vector3 getPosition();
 	void modelTransform();
+	void attachShader(Shader* shader);
 	
 private:
 	void init();

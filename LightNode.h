@@ -33,6 +33,7 @@ public:
 	GLfloat specular[4];
 	GLfloat position[4];
 	GLfloat spotDirection[3];
+	GLfloat intensity;
 
 	GLfloat spotCutOff;
 

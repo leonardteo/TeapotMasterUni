@@ -31,7 +31,7 @@ class SceneGraph
 public:
 	//Data Members
 	Node* rootNode;	
-	
+
 	//Methods
 	SceneGraph(void);
 	~SceneGraph(void);

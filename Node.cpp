@@ -11,6 +11,7 @@
 void Node::init()
 {
 	this->parent = NULL;
+	this->shader = NULL;
 	this->children = new list<Node*>;
 	this->scale = new Vector3(1.0f, 1.0f, 1.0f);
 	this->rotate = new Vector3();
@@ -39,6 +40,12 @@ Node::~Node()
 	delete this->rotate;
 	delete this->translate;
 	delete this;
+}
+
+//Attach a shader for rendering the node
+void Node::attachShader(Shader* shader)
+{
+	this->shader = shader;
 }
 
 //Add a child

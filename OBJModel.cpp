@@ -293,6 +293,7 @@ void OBJModel::prepArrays()
 		this->vertexArray[9*face + 8] = (GLfloat)this->vertices[v3]->z;	
 	}
 
+	/*
 	//Release all the object memory - we only need the arrays
 	delete [] this->vertices;
 	delete [] this->normals;
@@ -301,6 +302,7 @@ void OBJModel::prepArrays()
 	delete [] this->index;
 	delete [] this->normalsIndex;
 	delete [] this->uvIndex;
+	*/
 
 	//this->debugArrays();
 

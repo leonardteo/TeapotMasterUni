@@ -30,6 +30,9 @@ public:
 	
 	//Normalize the current vector
 	void normalize();
+
+	//Reverse the vector so that it's pointing the opposite direction
+	void reverse();
 	
 	//length/distance
 	float length();

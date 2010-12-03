@@ -8,8 +8,7 @@
 
 #include "PolyMeshNode.h"
 
-//Constructor
-PolyMeshNode::PolyMeshNode(string id) : Node(id)
+void PolyMeshNode::init()
 {
 	this->mesh = NULL;
 	this->texture = NULL;
@@ -17,6 +16,29 @@ PolyMeshNode::PolyMeshNode(string id) : Node(id)
 	//Create a default material and attach it
 	Material* material = new Material();
 	this->material = material;
+
+	this->collisionPlanes = NULL;
+	this->staticCollider = false;
+	this->activeCollider = false;
+	this->colliderSphereRadius = 0.0f;
+
+	this->numFaces = 0;
+}
+
+//Constructor
+PolyMeshNode::PolyMeshNode(string id) : Node(id)
+{
+	this->init();
+}
+
+//Convenience constructor
+PolyMeshNode::PolyMeshNode(string id, string filename) : Node(id)
+{
+	this->init();
+
+	//Load OBJ file
+	OBJModel* obj = new OBJModel(filename.c_str());
+	this->attachModel(obj);
 	
 }
 
@@ -32,12 +54,19 @@ PolyMeshNode::~PolyMeshNode()
 void PolyMeshNode::attachModel(OBJModel* model)
 {
 	this->mesh = model;
+	this->numFaces = model->numFaces;
 }
 
 //attachTexture
 void PolyMeshNode::attachTexture(Texture* texture)
 {
 	this->texture = texture;
+}
+
+void PolyMeshNode::attachTexture(string filename)
+{
+	Texture* textureNode = new Texture(filename.c_str());
+	this->attachTexture(textureNode);
 }
 
 //Attach material
@@ -54,6 +83,8 @@ void PolyMeshNode::draw()
 	{
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, this->texture->textureID);
+	} else {
+		glDisable(GL_TEXTURE_2D);
 	}
 
 	//Load material
@@ -63,6 +94,14 @@ void PolyMeshNode::draw()
 		glMaterialfv(GL_FRONT, GL_DIFFUSE, this->material->diffuse);
 		glMaterialfv(GL_FRONT, GL_SPECULAR, this->material->specular);
 		glMaterialfv(GL_FRONT, GL_SHININESS, this->material->shininess);
+	}
+
+	//Load Shader
+	if (this->shader != NULL)
+	{
+		glUseProgram(this->shader->shaderProgram);
+	} else {
+		glUseProgram(NULL);
 	}
 
 	//Check vertex buffer object extension
@@ -170,6 +209,18 @@ void PolyMeshNode::draw()
 	glEnd();
 	*/
 
+	//Unload shader so we don't interfere with other objects
+	if (this->shader != NULL)
+	{
+		glUseProgram(NULL);
+	}
+
+	//Unload texture so that we don't interfere with other objects
+	if (this->texture != NULL)
+	{
+		glBindTexture(GL_TEXTURE_2D, NULL);
+	} 
+
 }
 
 void PolyMeshNode::render(enum RenderType renderType)
@@ -223,4 +274,48 @@ void PolyMeshNode::render(enum RenderType renderType)
 
 
 	glPopMatrix();	
+}
+
+//Initialize static collision
+void PolyMeshNode::initStaticCollider()
+{
+	//Error Check
+	if (this->mesh == NULL || !this->staticCollider) 
+	{
+		return;
+	}
+
+	//Initialize collision plane array
+	this->collisionPlanes = new CollisionPlane*[this->mesh->numFaces];
+
+	//For each face, generate a plane
+	for (int face=0; face<this->mesh->numFaces; face++)
+	{
+		//Get vertex numbers
+		int v1, v2, v3;
+		v1 = this->mesh->index[face][0];
+		v2 = this->mesh->index[face][1];
+		v3 = this->mesh->index[face][2];
+
+		//Initialize actual vertices
+		Vector3 vert1(this->mesh->vertices[v1]->x, this->mesh->vertices[v1]->y, this->mesh->vertices[v1]->z);
+		Vector3 vert2(this->mesh->vertices[v2]->x, this->mesh->vertices[v2]->y, this->mesh->vertices[v2]->z);
+		Vector3 vert3(this->mesh->vertices[v3]->x, this->mesh->vertices[v3]->y, this->mesh->vertices[v3]->z);
+
+		//Initialize plane
+		CollisionPlane* plane = new CollisionPlane(vert1, vert2, vert3);
+		this->collisionPlanes[face] = plane;
+
+
+		//echo the normal for debugging
+		/*
+		cout << "Created Plane: " << endl;
+		cout << "V1: " << vert1 << endl;
+		cout << "V2: " << vert2 << endl;
+		cout << "V3: " << vert3 << endl;
+		cout << "Normal: " << plane->normal << endl;
+		cout << "Equation: " << plane->normal.x << "x + " << plane->normal.y << "y + " << plane->normal.z << "z + " << plane->d << " = 0" << endl;
+		cout << endl;
+		*/
+	}
 }

@@ -7,6 +7,8 @@
  *
  */
 
+#ifndef GRID_H
+#define GRID_H
 
 //OpenGL libraries
 #ifdef __APPLE__
@@ -24,3 +26,5 @@ public:
 	//~Grid();
 	void display(float scale = 1, int n=48);
 };
+
+#endif

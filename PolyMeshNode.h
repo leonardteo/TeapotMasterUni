@@ -15,6 +15,7 @@
 #include "OBJModel.h"
 #include "Texture.h"
 #include "Material.h"
+#include "CollisionPlane.h"
 
 //OpenGL libraries
 #ifdef __APPLE__
@@ -33,8 +34,21 @@ class PolyMeshNode : public Node {
 
 public:
 
+	//Data members
+	OBJModel* mesh;
+	Texture* texture;
+	Material* material;
+	CollisionPlane** collisionPlanes;
+	int numFaces;
+
+	//Collision Detection - if using polymesh as a collider object
+	bool staticCollider;
+	bool activeCollider;
+	float colliderSphereRadius;
+
 	//Constructor/Destructor
 	PolyMeshNode(string id = "");
+	PolyMeshNode(string id, string filename);
 	~PolyMeshNode();
 
 	//Attach model - note that this class does NOT load OBJModels. It attaches them so that you can have instances of models
@@ -42,6 +56,7 @@ public:
 
 	//Attach texture
 	void attachTexture(Texture* texture);
+	void attachTexture(string filename);
 
 	void attachMaterial(Material* material);
 
@@ -51,10 +66,11 @@ public:
 	//Scene graph rendering call
 	void render(RenderType renderType = ALL_OBJECTS);
 
-	//Data members
-	OBJModel* mesh;
-	Texture* texture;
-	Material* material;
+	//Collision Detection methods
+	void initStaticCollider();
+
+private:
+	void init();
 
 };
 

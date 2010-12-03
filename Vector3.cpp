@@ -46,6 +46,12 @@ void Vector3::normalize()
 	}
 }
 
+void Vector3::reverse()
+{
+	this->x = 0.0f - this->x;
+	this->y = 0.0f - this->y;
+	this->z = 0.0f - this->z;
+}
 
 
 //Overloaded << operator

@@ -33,7 +33,7 @@ CameraNode::CameraNode(string id, CameraType cameraType) : Node(id)
 
 	//Default Projection settings
 	this->nearPlane = 0.1f;
-	this->farPlane = 500.0f;
+	this->farPlane = 1000.0f;
 	this->fov = 45;
 	this->perspectiveMode = true;
 

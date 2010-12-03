@@ -14,8 +14,8 @@ Leonard Teo
 #include <GLEW/GLEW.h>
 #include <GLUT/GLUT.h>
 #else
-#include <GL/glew.h>
-#include <GL/glut.h>
+#include <gl/glew.h>
+#include <gl/glut.h>
 #endif
 
 //Engine libraries
@@ -30,6 +30,9 @@ Leonard Teo
 #include "SceneGraph.h"
 #include "LightNode.h"
 #include "Grid.h"
+#include "Shader.h"
+
+#include "textfile.h"
 
 using namespace std;
 
@@ -66,7 +69,8 @@ int ballVelocity = 0;		//The velocity of the ball
 Vector3 upVector(0.0f, 1.0f, 0.0f);		//Up direction
 Vector3 forwardVector;
 Vector3 velocityVec;
-const float ballCircumference = 31.415926535897932384626433832795f;
+const float ballCircumference = 15.707963267948966192313216916398f;
+const float speedLimit = 0.7f;
 
 //Useful Math constants
 const float degreesToRadians = 0.0174532925f;
@@ -94,6 +98,15 @@ bool sPressed = false; //back
 bool aPressed = false; //left
 bool dPressed = false; //right
 
+//Collision Mesh
+PolyMeshNode* collisionNode;
+
+//Shaders
+bool useShaders = true;
+Shader* basicShader;
+void setShaders();
+
+Shader* floorShader;
 
 
 /** 
@@ -168,11 +181,11 @@ static void animate(int val)
 	//Camera movements
 	if (upPressed)
 	{
-		ballCam->elevation -= 4.0f;
+		ballCam->elevation += 4.0f;
 	}
 	if (downPressed)
 	{
-		ballCam->elevation += 4.0f;
+		ballCam->elevation -= 4.0f;
 	}
 	if (leftPressed)
 	{
@@ -188,9 +201,9 @@ static void animate(int val)
 	{
 		ballCam->elevation = 90.0f;
 	}
-	if (ballCam->elevation < 0.0f)
+	if (ballCam->elevation < -10.0f)
 	{
-		ballCam->elevation = 0.0f;
+		ballCam->elevation = -10.0f;
 	}
 	if (ballCam->azimuth > 360.0f)
 	{
@@ -245,12 +258,38 @@ static void animate(int val)
 	velocityVec = newPosition - ballpos;
 
 	//Limit the speed. If the velocity is greater than the speed limit, set it back, and recalculate the new position
-	if (velocityVec.length() > 1.0f)
+	if (velocityVec.length() > speedLimit)
 	{
 		velocityVec.normalize();
+		velocityVec = velocityVec * speedLimit;
 		newPosition = ballpos + velocityVec;
 	}
-	
+
+	/**
+	Collision Detection
+	**/
+	//For each plane, check collision
+	for (int face=0; face < collisionNode->numFaces; face++)
+	{
+
+		//Check if ball collides with plane
+		float planeDistance = collisionNode->collisionPlanes[face]->classifyPoint(newPosition);
+		//cout << "Position collision check: " << planeDistance << endl;
+
+		//Rude test. if collision with plane, stop the ball
+		if (planeDistance < 2.5f)
+		{
+			//Check if ball is inside the triangle
+			if (collisionNode->collisionPlanes[face]->insideTriangle(newPosition))
+			{
+				newPosition = ballpos;
+				velocityVec.zero();
+			}
+			
+		}
+
+	}
+
 	//Set ball Position
 	ballPositionNode->setTranslation(newPosition.x, newPosition.y, newPosition.z);
 		
@@ -266,11 +305,11 @@ static void animate(int val)
 	ballRotationNode->rotateBall(rotationAxis, ballAngularDisplacement);
 
 
-	//Reduce velocity vector
+	//Reduce velocity vector - drag factor
 	Vector3 velocityVecNormalized = velocityVec;
 	velocityVecNormalized.normalize();
-	velocityVec = velocityVecNormalized * (velocityVec.length() - 0.025);
-	if (velocityVec.length() < 0.001) velocityVec.zero();
+	velocityVec = velocityVecNormalized * (velocityVec.length() - 0.01);
+	if (velocityVec.length() < 0.01) velocityVec.zero();
 
 
 	//Post redisplay
@@ -300,14 +339,9 @@ static void display()
 	ballCam->viewTransform();
 	
 	//Draw a grid for reference
-	grid.display(4);
+	//grid.display(4);
 	
-
-
-
 	sceneGraph->render();
-	
-
 		
 	profiler();
 	
@@ -357,6 +391,18 @@ static void keyboard(unsigned char key, int mx, int my)
 			debug();
 			break;
 			
+
+		case 'o':
+			useShaders = !useShaders;
+			if (useShaders){
+				cout << "Turning on shaders" << endl;
+				setShaders();
+			} else {
+				cout << "Turning off shaders" << endl;
+				sceneGraph->getNode("ball")->shader = NULL;
+				sceneGraph->getNode("ground")->shader = NULL;
+			}
+			break;
 			
 			//Exit
 		case 27:
@@ -465,6 +511,110 @@ static void mouse_clicks(int button, int state, int mx, int my)
 }
 
 
+/**
+Load the level
+**/
+Node* loadLevel()
+{
+	//Create a null node to load the level mesh
+	TransformNode* levelNode = new TransformNode("level");
+
+	//Load the level
+	PolyMeshNode* floorNode = new PolyMeshNode("floor", "models/floor.obj");
+	floorNode->attachTexture("textures/floor.bmp");
+	levelNode->addChild(floorNode);
+
+	PolyMeshNode* frontWallNode = new PolyMeshNode("frontwall", "models/wall_front.obj");
+	frontWallNode->attachTexture("textures/wall_front.bmp");
+	levelNode->addChild(frontWallNode);
+
+	PolyMeshNode* rearWallNode = new PolyMeshNode("rearwall", "models/wall_rear.obj");
+	rearWallNode->attachTexture("textures/wall_rear.bmp");
+	levelNode->addChild(rearWallNode);
+
+	PolyMeshNode* rightWallNode = new PolyMeshNode("rightwall", "models/wall_right.obj");
+	rightWallNode->attachTexture("textures/wall_right.bmp");
+	levelNode->addChild(rightWallNode);
+
+	PolyMeshNode* leftWallNode = new PolyMeshNode("leftwall", "models/wall_left.obj");
+	leftWallNode->attachTexture("textures/wall_left.bmp");
+	levelNode->addChild(leftWallNode);
+
+	PolyMeshNode* ceilingNode = new PolyMeshNode("ceiling", "models/ceiling.obj");
+	ceilingNode->attachTexture("textures/ceiling.bmp");
+	levelNode->addChild(ceilingNode);
+
+	PolyMeshNode* mouldingsNode = new PolyMeshNode("mouldings", "models/mouldings.obj");
+	mouldingsNode->attachTexture("textures/mouldings.bmp");
+	levelNode->addChild(mouldingsNode);
+
+	//Load bed, mattress and blanket
+	PolyMeshNode* bedNode = new PolyMeshNode("bed", "models/bed.obj");
+	bedNode->attachTexture("textures/bed.bmp");
+	levelNode->addChild(bedNode);
+
+	PolyMeshNode* mattressNode = new PolyMeshNode("mattress", "models/mattress.obj");
+	mattressNode->attachTexture("textures/mattress.bmp");
+	levelNode->addChild(mattressNode);
+
+	PolyMeshNode* blanketNode = new PolyMeshNode("blanket", "models/blanket.obj");
+	blanketNode->attachTexture("textures/blanket.bmp");
+	levelNode->addChild(blanketNode);
+
+	//Load furniture
+	PolyMeshNode* bedsideNode = new PolyMeshNode("bedside", "models/bedside.obj");
+	bedsideNode->attachTexture("textures/bedside.bmp");
+	levelNode->addChild(bedsideNode);
+
+	PolyMeshNode* chestNode = new PolyMeshNode("chest", "models/chest.obj");
+	chestNode->attachTexture("textures/chest.bmp");
+	levelNode->addChild(chestNode);
+
+	PolyMeshNode* ottomanNode = new PolyMeshNode("ottman", "models/ottoman.obj");
+	ottomanNode->attachTexture("textures/ottoman.bmp");
+	levelNode->addChild(ottomanNode);
+
+	PolyMeshNode* tableNode = new PolyMeshNode("table", "models/table.obj");
+	tableNode->attachTexture("textures/table.bmp");
+	levelNode->addChild(tableNode);
+
+	PolyMeshNode* shelfNode = new PolyMeshNode("shelf", "models/shelf.obj");
+	shelfNode->attachTexture("textures/shelf.bmp");
+	levelNode->addChild(shelfNode);
+
+	PolyMeshNode* wallShelfNode = new PolyMeshNode("wallshelf", "models/wallshelf.obj");
+	wallShelfNode->attachTexture("textures/wallshelf.bmp");
+	levelNode->addChild(wallShelfNode);
+
+	PolyMeshNode* dresserNode = new PolyMeshNode("dresser", "models/dresser.obj");
+	dresserNode->attachTexture("textures/dresser.bmp");
+	levelNode->addChild(dresserNode);
+
+	//Load doors and windows
+	PolyMeshNode* doorNode = new PolyMeshNode("door", "models/door_left.obj");
+	doorNode->attachTexture("textures/door_left.bmp");
+	levelNode->addChild(doorNode);
+
+	PolyMeshNode* closetDoorNode = new PolyMeshNode("closetdoor", "models/closetdoor.obj");
+	closetDoorNode->attachTexture("textures/closetdoor.bmp");
+	levelNode->addChild(closetDoorNode);
+
+	PolyMeshNode* rightWindow = new PolyMeshNode("rightwindow", "models/window_right.obj");
+	rightWindow->attachTexture("textures/window_right.bmp");
+	levelNode->addChild(rightWindow);
+
+	PolyMeshNode* frontWindow = new PolyMeshNode("frontwindow", "models/window_front.obj");
+	frontWindow->attachTexture("textures/window_front.bmp");
+	levelNode->addChild(frontWindow);
+
+	//Load skybox
+	PolyMeshNode* skybox = new PolyMeshNode("skybox", "models/skybox.obj");
+	skybox->attachTexture("textures/skybox.bmp");
+	levelNode->addChild(skybox);
+
+	return levelNode;
+	
+}
 
 /**
  Clear out the screen
@@ -480,7 +630,6 @@ static void init()
 	glEnable(GL_DEPTH_TEST);
 	
 	//Anti-Aliasing & transparency
-	
 	glEnable (GL_LINE_SMOOTH);
 	glEnable(GL_POLYGON_SMOOTH);
 	glEnable (GL_BLEND);
@@ -489,43 +638,92 @@ static void init()
 	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 	glLineWidth (1);
 	
-	
-	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClearColor(0.2, 0.2, 0.2, 0.0);
 
 	//Load models
 	OBJModel* ballOBJ = new OBJModel("models/ball.obj");
 	PolyMeshNode* ballMeshNode = new PolyMeshNode("ball");
+	ballMeshNode->activeCollider = true;
+	ballMeshNode->colliderSphereRadius = 2.5f;
 	ballMeshNode->attachModel(ballOBJ);
 	Texture* ballTexture = new Texture("textures/star.bmp");
 	ballMeshNode->attachTexture(ballTexture);
+
+	Material* ballMaterial = new Material();
+	ballMaterial->setDiffuse(1.0f, 1.0f, 1.0f, 1.0f);
+	//ballMaterial->setAmbient(0.25f, 0.25f, 0.25f, 1.0f);
+	ballMaterial->setShininess(20.0f);
+	ballMaterial->setSpecular(0.8f, 0.8f, 0.8f, 1.0f);
+	
+	ballMeshNode->attachMaterial(ballMaterial);
 
 	ballRotationNode = new TransformNode("ballRotation", BALLROTATE);
 	ballRotationNode->addChild(ballMeshNode);
 
 	ballPositionNode = new TransformNode("ballPosition", TRANSLATE);
-	ballPositionNode->setTranslation(0.0f, 5.0f, 0.0f);
+	ballPositionNode->setTranslation(0.0f, 2.5f, 0.0f);		//Center of the ball is 2.5 up
 	ballPositionNode->addChild(ballRotationNode);
 	
+	//Offset the camera upwards slightly
+	TransformNode* ballCamOffset = new TransformNode("ballCamOffset", TRANSLATE);
+	ballCamOffset->setTranslation(0.0f, 7.5f, 0.0f);
+	ballPositionNode->addChild(ballCamOffset);
+
+	//Ball Camera
+	ballCam = new CameraNode("ballcam", POLAR);
+	ballCam->fov = 90.0f;
+	ballCam->distance = 20.0f;
+	ballCam->elevation = 20.0f;
+	ballCamOffset->addChild(ballCam);
 	
 	//Create a default light
-	LightNode* lightNode = new LightNode("light", GL_LIGHT0, DIRECTIONAL);
-	lightNode->rotate->x = 45.0f;
-	lightNode->translate->y = 2.0f;
+	LightNode* lightNode = new LightNode("light", GL_LIGHT0, POINTLIGHT);
+	//lightNode->rotate->x = 45.0f;
+	//lightNode->translate->y = 2.0f;
+	lightNode->setTranslation(0.0f, 50.0f, 0.0f);
+
+	//Create a few lights
+	LightNode* lightNode2 = new LightNode("light2", GL_LIGHT1, POINTLIGHT);
+	lightNode2->setTranslation(100.0f, 50.0f, 0.0f);
+	lightNode2->intensity = 0.2f;
+	LightNode* lightNode3 = new LightNode("light3", GL_LIGHT2, POINTLIGHT);
+	lightNode3->setTranslation(-100.0f, 50.0f, 0.0f);
+	lightNode3->intensity = 0.2f;
 	
+	//Load blinn shader
+	Shader* blinnShader = new Shader();
+	blinnShader->loadVertexShader("shaders/blinn.vert");
+	blinnShader->loadFragmentShader("shaders/blinn.frag");
+	blinnShader->compile();
 	
 	//Scene Graph
 	sceneGraph = new SceneGraph();
 	sceneGraph->rootNode->addChild(lightNode);
 	sceneGraph->rootNode->addChild(ballPositionNode);
-	
+	sceneGraph->rootNode->addChild(lightNode2);
+	sceneGraph->rootNode->addChild(lightNode3);
 
-	ballCam = new CameraNode("ballcam", POLAR);
-	ballCam->distance = 40.0f;
-	ballCam->elevation = 40.0f;
-	ballPositionNode->addChild(ballCam);
-	
 
+	//Load the level into the root node
+	//sceneGraph->rootNode->addChild(loadLevel());
+
+	//Load collision mesh
+	collisionNode = new PolyMeshNode("collision", "models/testcollider.obj");
+	collisionNode->staticCollider = true;
+	collisionNode->initStaticCollider();
+	sceneGraph->rootNode->addChild(collisionNode);
 	
+	setShaders();
+}
+
+void setShaders()
+{
+	//Attach ball shader
+	basicShader = new Shader();
+	basicShader->loadVertexShader("shaders/blinn.vert");
+	basicShader->loadFragmentShader("shaders/blinn.frag");
+	basicShader->compile();
+	sceneGraph->getNode("ball")->attachShader(basicShader);
 }
 
 /**
@@ -535,31 +733,12 @@ int main(int argc, char** argv)
 {
 	
 	//Get current directory
-	cout << "Firing up OBJViewer" << endl;
-	cout << "===================" << endl << endl;
-	
-	cout << "Camera Motion " << endl;
-	cout << "Orbit: Left click and drag mouse" << endl;
-	cout << "Panning: Middle click and drag mouse" << endl;
-	cout << "Dolly: Right click and drag mouse" << endl << endl;
-	
-	cout << "Viewport Controls " << endl;
-	cout << "w: Toggle wireframe" << endl;
-	cout << "s: Toggle shaded mode" << endl;
-	cout << "p: Perspective mode" << endl;
-	cout << "o: Orthographic mode" << endl;
-	cout << "+ or z: Zoom in" << endl;
-	cout << "- or Z(shift-z): Zoom out" << endl;
-	cout << "c: Reset view" << endl << endl;
-	
-	cout << "Escape: Quit" << endl;
-	
 	
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(640, 480);
 	glutInitWindowPosition(100, 100);
-	glutCreateWindow("OBJViewer Test - Leonard Teo");
+	glutCreateWindow("Teapot Master - Leonard Teo");
 	
 	//Initialize GLEW
 	GLenum err = glewInit();
@@ -588,8 +767,6 @@ int main(int argc, char** argv)
 	// Initialize the time variables
 	startTime = glutGet(GLUT_ELAPSED_TIME);
 	prevTime = startTime;
-	
-
 	
 	glutMainLoop();
 	
