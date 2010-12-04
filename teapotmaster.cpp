@@ -69,6 +69,7 @@ int ballVelocity = 0;		//The velocity of the ball
 Vector3 upVector(0.0f, 1.0f, 0.0f);		//Up direction
 Vector3 forwardVector;
 Vector3 velocityVec;
+const float ballRadius = 2.5f;
 const float ballCircumference = 15.707963267948966192313216916398f;
 const float speedLimit = 0.7f;
 
@@ -273,18 +274,24 @@ static void animate(int val)
 	{
 
 		//Check if ball collides with plane
-		float planeDistance = collisionNode->collisionPlanes[face]->classifyPoint(newPosition);
+		float planeDistance = collisionNode->collisionTriangles[face]->sphereCollision(newPosition, ballRadius);
+
 		//cout << "Position collision check: " << planeDistance << endl;
 
 		//Rude test. if collision with plane, stop the ball
-		if (planeDistance < 2.5f)
+		if (planeDistance == 0.0f)
 		{
 			//Check if ball is inside the triangle
-			if (collisionNode->collisionPlanes[face]->insideTriangle(newPosition))
+			if (collisionNode->collisionTriangles[face]->insideTriangle(newPosition) || collisionNode->collisionTriangles[face]->sphereEdgeCollision(newPosition, ballRadius))
 			{
-				newPosition = ballpos;
-				velocityVec.zero();
-			}
+				//Bounce the ball off - calculate reflection vector  R = V-(2*V.N)N
+				Vector3 V = velocityVec;
+				V.normalize();
+				Vector3 reflectionVec = V - collisionNode->collisionTriangles[face]->normal * (2 * dotProduct(V, collisionNode->collisionTriangles[face]->normal));
+				velocityVec = reflectionVec * velocityVec.length() * 0.5f;	//Damp the ball bounce
+				newPosition = ballpos + velocityVec;
+
+			} 
 			
 		}
 
@@ -644,7 +651,7 @@ static void init()
 	OBJModel* ballOBJ = new OBJModel("models/ball.obj");
 	PolyMeshNode* ballMeshNode = new PolyMeshNode("ball");
 	ballMeshNode->activeCollider = true;
-	ballMeshNode->colliderSphereRadius = 2.5f;
+	ballMeshNode->colliderSphereRadius = ballRadius;
 	ballMeshNode->attachModel(ballOBJ);
 	Texture* ballTexture = new Texture("textures/star.bmp");
 	ballMeshNode->attachTexture(ballTexture);
@@ -661,7 +668,7 @@ static void init()
 	ballRotationNode->addChild(ballMeshNode);
 
 	ballPositionNode = new TransformNode("ballPosition", TRANSLATE);
-	ballPositionNode->setTranslation(0.0f, 2.5f, 0.0f);		//Center of the ball is 2.5 up
+	ballPositionNode->setTranslation(0.0f, ballRadius, 0.0f);		//Center of the ball is 2.5 up
 	ballPositionNode->addChild(ballRotationNode);
 	
 	//Offset the camera upwards slightly
@@ -705,13 +712,13 @@ static void init()
 
 
 	//Load the level into the root node
-	//sceneGraph->rootNode->addChild(loadLevel());
+	sceneGraph->rootNode->addChild(loadLevel());
 
-	//Load collision mesh
-	collisionNode = new PolyMeshNode("collision", "models/testcollider.obj");
+	//Load collision mesh - test collision is models/testcollider.obj, live is collision.obj
+	collisionNode = new PolyMeshNode("collision", "models/collision.obj");
 	collisionNode->staticCollider = true;
 	collisionNode->initStaticCollider();
-	sceneGraph->rootNode->addChild(collisionNode);
+	//sceneGraph->rootNode->addChild(collisionNode);
 	
 	setShaders();
 }

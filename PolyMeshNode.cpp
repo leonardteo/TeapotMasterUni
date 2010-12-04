@@ -17,7 +17,7 @@ void PolyMeshNode::init()
 	Material* material = new Material();
 	this->material = material;
 
-	this->collisionPlanes = NULL;
+	this->collisionTriangles = NULL;
 	this->staticCollider = false;
 	this->activeCollider = false;
 	this->colliderSphereRadius = 0.0f;
@@ -286,7 +286,7 @@ void PolyMeshNode::initStaticCollider()
 	}
 
 	//Initialize collision plane array
-	this->collisionPlanes = new CollisionPlane*[this->mesh->numFaces];
+	this->collisionTriangles = new CollisionTriangle*[this->mesh->numFaces];
 
 	//For each face, generate a plane
 	for (int face=0; face<this->mesh->numFaces; face++)
@@ -303,8 +303,8 @@ void PolyMeshNode::initStaticCollider()
 		Vector3 vert3(this->mesh->vertices[v3]->x, this->mesh->vertices[v3]->y, this->mesh->vertices[v3]->z);
 
 		//Initialize plane
-		CollisionPlane* plane = new CollisionPlane(vert1, vert2, vert3);
-		this->collisionPlanes[face] = plane;
+		CollisionTriangle* plane = new CollisionTriangle(vert1, vert2, vert3);
+		this->collisionTriangles[face] = plane;
 
 
 		//echo the normal for debugging

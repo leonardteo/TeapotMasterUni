@@ -15,7 +15,7 @@
 #include "OBJModel.h"
 #include "Texture.h"
 #include "Material.h"
-#include "CollisionPlane.h"
+#include "CollisionTriangle.h"
 
 //OpenGL libraries
 #ifdef __APPLE__
@@ -38,7 +38,7 @@ public:
 	OBJModel* mesh;
 	Texture* texture;
 	Material* material;
-	CollisionPlane** collisionPlanes;
+	CollisionTriangle** collisionTriangles;
 	int numFaces;
 
 	//Collision Detection - if using polymesh as a collider object
