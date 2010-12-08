@@ -23,6 +23,7 @@ void PolyMeshNode::init()
 	this->colliderSphereRadius = 0.0f;
 
 	this->numFaces = 0;
+	this->visible = true;
 }
 
 //Constructor
@@ -233,37 +234,39 @@ void PolyMeshNode::render(enum RenderType renderType)
 		this->modelTransform();
 
 		//Drawing
-
-		//Figure out if this is an opaque or transparent object, and draw appropriately
-		if (renderType == ALL_OBJECTS)
+		if (this->visible)
 		{
-			this->draw();
-		} else {
-			if (this->material != NULL)
+			//Figure out if this is an opaque or transparent object, and draw appropriately
+			if (renderType == ALL_OBJECTS)
 			{
-			//Check material
-			if (this->material->diffuse[3] < 1.0f || this->material->ambient[3] < 1.0f)
-			{
-				//If there is transparency
-
-				//Check the render type. If transparent, draw
-				if (renderType == TRANSPARENT_OBJECTS)
-				{
-					this->draw();
-				}
+				this->draw();
 			} else {
-				//If there is no transparency
-				if (renderType == OPAQUE_OBJECTS)
+				if (this->material != NULL)
 				{
-					this->draw();
+				//Check material
+				if (this->material->diffuse[3] < 1.0f || this->material->ambient[3] < 1.0f)
+				{
+					//If there is transparency
+
+					//Check the render type. If transparent, draw
+					if (renderType == TRANSPARENT_OBJECTS)
+					{
+						this->draw();
+					}
+				} else {
+					//If there is no transparency
+					if (renderType == OPAQUE_OBJECTS)
+					{
+						this->draw();
+					}
 				}
-			}
 
-			} else {
-			//No material -- assume that it is opaque, so draw
-			this->draw();
-			}
+				} else {
+				//No material -- assume that it is opaque, so draw
+				this->draw();
+				}
 
+			}
 		}
 		
 		//Draw children

@@ -8,6 +8,8 @@ Leonard Teo
 #include <sstream>
 #include <string>
 #include <math.h>
+#include <time.h>
+#include <vector>
 
 //OpenGL libraries
 #ifdef __APPLE__
@@ -31,6 +33,7 @@ Leonard Teo
 #include "LightNode.h"
 #include "Grid.h"
 #include "Shader.h"
+#include "NPC.h"
 
 #include "textfile.h"
 
@@ -78,7 +81,7 @@ const float degreesToRadians = 0.0174532925f;
 const float radiansToDegrees = 57.2957795f;
 const float pi = 3.14159265f;
 
-#define TIMERMSECS 16.666666666666666666666666666667
+#define TIMERMSECS 16
 #define PI 3.14159265f
 #define RADIANSTODEGREES 57.2957795f
 #define DEGREESTORADIANS 0.0174532925f
@@ -102,12 +105,21 @@ bool dPressed = false; //right
 //Collision Mesh
 PolyMeshNode* collisionNode;
 
+//Teapots
+NPC** teapots;	//Array of teapots
+const int numTeapots = 5;
+int teapotsLeft = numTeapots;
+Vector3 teapot1Position;		//To encapsulate into a class...
+
 //Shaders
 bool useShaders = true;
 Shader* basicShader;
 void setShaders();
 
 Shader* floorShader;
+
+//Goal for the teapots
+PolyMeshNode* goal;
 
 
 /** 
@@ -132,6 +144,39 @@ void drawText(char* string)
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *p);
 	}
 }
+
+
+static void drawPlayerStatus()
+{
+	glDisable(GL_TEXTURE_2D);
+	
+	int numFinished = numTeapots - teapotsLeft;
+
+	char status[255];
+
+	if (teapotsLeft > 0)
+	{
+		if (teapotsLeft == 1)
+		{
+			sprintf(status, "%i/%i teapots rescued. %i teapot remaining.", numFinished, numTeapots, teapotsLeft);
+		} else {
+			sprintf(status, "%i/%i teapots rescued. %i teapots remaining.", numFinished, numTeapots, teapotsLeft);
+		}
+	} else {
+		sprintf(status, "Congratulations! You rescued all the teapots! :)");
+	}
+		
+	
+	glColor3f(1.0f, 1.0f, 1.0f);
+	int posx, posy;
+	posx = 5;
+	posy = height - 20;
+	glWindowPos2i(posx, posy);
+	
+	drawText(status);
+	glEnable(GL_TEXTURE_2D);
+}
+
 
 /**
  Calculate and display FPS
@@ -164,21 +209,29 @@ static void profiler()
 
 
 /**
- Animation
- //Note that the value input here is not used
- **/
-static void animate(int val)
+AI Pass
+**/
+static void update_AI()
 {
 	
-	// Set up the next timer tick (do this first)	
-	glutTimerFunc(TIMERMSECS, animate, 0);
-	
-	// Measure the elapsed time
-	int currTime = glutGet(GLUT_ELAPSED_TIME);
-	int timeSincePrevFrame = currTime - prevTime;
-	int elapsedTime = currTime - startTime;
-	
-	
+}
+
+/**
+Collision Detection
+**/
+static void update_collision_detection()
+{
+
+
+
+
+}
+
+/**
+Player Movement pass
+**/
+static void update_player_movement()
+{
 	//Camera movements
 	if (upPressed)
 	{
@@ -198,9 +251,9 @@ static void animate(int val)
 	}
 	
 	//Error checks to make sure we're in range
-	if (ballCam->elevation > 90.0f)
+	if (ballCam->elevation > 85.0f)
 	{
-		ballCam->elevation = 90.0f;
+		ballCam->elevation = 85.0f;
 	}
 	if (ballCam->elevation < -10.0f)
 	{
@@ -254,7 +307,7 @@ static void animate(int val)
 	{
 		newPosition = newPosition + (leftVector/20);
 	}
-
+	
 	//Calculate the velocity vector
 	velocityVec = newPosition - ballpos;
 
@@ -266,10 +319,11 @@ static void animate(int val)
 		newPosition = ballpos + velocityVec;
 	}
 
+
 	/**
-	Collision Detection
+	Ball Collision Detection Against Walls
 	**/
-	//For each plane, check collision
+	//For each plane, check collision against the ball
 	for (int face=0; face < collisionNode->numFaces; face++)
 	{
 
@@ -278,19 +332,54 @@ static void animate(int val)
 
 		//cout << "Position collision check: " << planeDistance << endl;
 
-		//Rude test. if collision with plane, stop the ball
+		//Collision Detection
 		if (planeDistance == 0.0f)
 		{
 			//Check if ball is inside the triangle
-			if (collisionNode->collisionTriangles[face]->insideTriangle(newPosition) || collisionNode->collisionTriangles[face]->sphereEdgeCollision(newPosition, ballRadius))
+			bool insideTriangle = collisionNode->collisionTriangles[face]->insideTriangle(newPosition);
+			bool edgeCollision = collisionNode->collisionTriangles[face]->sphereEdgeCollision(newPosition, ballRadius);
+			if (insideTriangle || edgeCollision)
 			{
+				/* Debugging
+				cout << endl ;
+				int currTime = glutGet(GLUT_ELAPSED_TIME);
+				cout << "Game time: " << currTime << endl;
+				cout << "Collision Detected on face: " << face  << endl;
+				cout << "Ball position: " << ballpos << endl;
+				cout << "New ball position: " << newPosition << endl;
+				cout << "Velocity Vec: " << velocityVec << endl;
+				cout << "Face edges: " 
+					<< "\n V1: " << collisionNode->collisionTriangles[face]->v1 
+					<< "\n V2: " << collisionNode->collisionTriangles[face]->v2
+					<< "\n V3: " << collisionNode->collisionTriangles[face]->v3
+					<< endl;
+				if (insideTriangle) 
+				{
+					cout << "Inside Triangle Test TRUE" << endl;
+				} else {
+					cout << "Inside Triangle Test FALSE" << endl;
+				}
+				if (edgeCollision)
+				{
+					cout << "Edge Collision Test TRUE" << endl;
+				} else {
+					cout << "Edge Collision Test FALSE" << endl;
+				}
+				*/
+
 				//Bounce the ball off - calculate reflection vector  R = V-(2*V.N)N
 				Vector3 V = velocityVec;
-				V.normalize();
-				Vector3 reflectionVec = V - collisionNode->collisionTriangles[face]->normal * (2 * dotProduct(V, collisionNode->collisionTriangles[face]->normal));
-				velocityVec = reflectionVec * velocityVec.length() * 0.5f;	//Damp the ball bounce
+				if (V.length() >  0.0f)
+				{
+					V.normalize();
+					Vector3 reflectionVec = V - collisionNode->collisionTriangles[face]->normal * (2 * dotProduct(V, collisionNode->collisionTriangles[face]->normal));
+					velocityVec = reflectionVec * velocityVec.length() * 0.5f;	//Damp the ball bounce
+				} else {
+					velocityVec = collisionNode->collisionTriangles[face]->normal * 0.05f;
+				}
 				newPosition = ballpos + velocityVec;
-
+				
+				//break;	//We've collided. Don't bother running through the rest of the tests
 			} 
 			
 		}
@@ -311,14 +400,272 @@ static void animate(int val)
 	rotationAxis.normalize();
 	ballRotationNode->rotateBall(rotationAxis, ballAngularDisplacement);
 
-
 	//Reduce velocity vector - drag factor
 	Vector3 velocityVecNormalized = velocityVec;
 	velocityVecNormalized.normalize();
-	velocityVec = velocityVecNormalized * (velocityVec.length() - 0.01);
+	velocityVec = velocityVecNormalized * (velocityVec.length() - 0.01f);
 	if (velocityVec.length() < 0.01) velocityVec.zero();
 
+}
 
+static void update_teapot_movements()
+{
+	//Do for teapots
+	Vector3 ballpos = ballPositionNode->getPosition();
+	Vector3 goalpos = goal->getPosition();
+
+	for (int i=0; i<numTeapots; i++)
+	{
+	
+		if (!teapots[i]->finished)
+		{
+			//Set up positions
+			Vector3 teapotPosition = teapots[i]->getPosition();
+
+			/**
+			Check if Teapot has reached goal
+			**/
+			Vector3 teapot_to_goal = goalpos - teapotPosition;
+			float distance_from_goal = teapot_to_goal.length();
+			if (distance_from_goal < goal->colliderSphereRadius + teapots[i]->boundingSphereRadius)
+			{
+				//Teapot has reached the goal. Get rid of it
+				teapots[i]->finished = true;
+				teapots[i]->meshNode->visible = false;
+				teapots[i]->exclamation->visible = false;
+
+				teapotsLeft--;
+
+				cout << "Teapot reached goal! " << teapotsLeft << " teapots remaining!" << endl;
+			}
+
+			/**
+			Teapot AI
+			**/
+			Vector3 teapot_to_player = ballpos - teapotPosition;
+			float distance_to_player = teapot_to_player.length();
+
+			//Initialize alarmed state to false
+			teapots[i]->alarmed = false;
+
+			if (distance_to_player < 20.0f)
+			{
+				//Teapot is alarmed. Show exclamation mark
+				teapots[i]->alarmed = true;
+				if (!teapots[i]->finished)
+				{
+					teapots[i]->exclamation->visible = true;
+				}
+				
+				//Check if teapot is looking towards the player
+				teapot_to_player.normalize();
+				float test = dotProduct(teapot_to_player, *teapots[i]->heading);
+		
+				//Check if the teapot can "see" the player. If it can see the player, stop the teapot and only rotate.
+				if (test > 0.0f)
+				{
+					//Stop the teapot. It should only rotate
+					teapots[i]->velocity = 0.0f;
+
+					//Calculate angle
+					float angle = acosf(test) * RADIANSTODEGREES;
+
+					//Test the rotation
+					//Create rotation tests
+					Vector3 V = *teapots[i]->heading;
+					Matrix4 rotMatrixClockwise; rotMatrixClockwise.rotate(upVector, -5.0f);
+					Matrix4 rotMatrixCClockwise; rotMatrixCClockwise.rotate(upVector, 5.0f);
+					Vector3 V_clockwise = rotMatrixClockwise * V; 
+					Vector3 V_cclockwise = rotMatrixCClockwise * V; 
+
+					float clockwiseAngle = acos(dotProduct(V_clockwise, teapot_to_player)) * RADIANSTODEGREES;
+					float cclockwiseAngle = acos(dotProduct(V_cclockwise, teapot_to_player)) * RADIANSTODEGREES;
+
+					if (clockwiseAngle < cclockwiseAngle)
+					{
+						//Rotate clockwise
+						teapots[i]->rotateHeading(3.0f);
+					} else {
+						//Rotate counter clockwise
+						teapots[i]->rotateHeading(-3.0f);
+					}
+
+				} else {
+					//Teapot cannot "see" the player but it is within a dangerous range, make it run faster the closer the player is.
+					teapots[i]->velocity = 0.2f + ((20.0f - distance_to_player)/20.0f) * 0.5f;
+				}
+		
+			} else {
+
+				//Teapot is relaxed. Don't show exclamation mark and relax
+				teapots[i]->exclamation->visible = false;
+				teapots[i]->velocity = 0.2f;
+			}
+	
+
+			/**
+			Teapot Moving
+			**/
+
+			//If teapot is alarmed, it should be turning faster
+			float rotrate = 1.0f;
+			if (teapots[i]->alarmed)
+			{
+				rotrate = 3.0f;
+			} 
+
+			//Calculate new position of teapot
+			Vector3 teapotVelocityVec = *teapots[i]->heading * teapots[i]->velocity;
+			Vector3 newTeapotPosition = teapotPosition + teapotVelocityVec;	//Set the new position
+
+			/**
+			Teapot/Player Collision Detection
+			In the event that the teapot collides with the player.....
+			**/
+
+			//Set new variables based on the new teapot position
+			teapot_to_player = ballpos - newTeapotPosition;
+			distance_to_player = teapot_to_player.length();
+			if (distance_to_player < (ballRadius + teapots[i]->boundingSphereRadius))
+			{
+				velocityVec = teapot_to_player;
+				velocityVec.normalize();
+				velocityVec = velocityVec * 0.5f;
+				//newTeapotPosition = newTeapotPosition + velocityVec;
+
+				//cout << "Player/Teapot intersection" << endl;
+				//cout << "VelocityVec: " << velocityVec << endl;
+			}
+
+			/**
+			Teapot/Teapot Collision Detection
+			**/
+			for (int j=0; j<numTeapots; j++)
+			{
+
+				if (j != i && !teapots[j]->finished) //Don't worry about checking against current teapot
+				{
+					//Check distance to other teapot
+					Vector3 otherTeapotPosition = teapots[j]->getPosition();
+					Vector3 otherTeapotToThis = newTeapotPosition - otherTeapotPosition;
+					float distanceFromOtherTeapot = otherTeapotToThis.length();
+
+					if (distanceFromOtherTeapot < teapots[i]->boundingSphereRadius + teapots[j]->boundingSphereRadius)
+					{
+						//Turn the teapot away
+						teapots[i]->rotateHeading(rotrate);
+						teapotVelocityVec.zero();
+					}
+				}
+			}
+
+		
+
+			/**
+			Teapot static collision detection
+			**/
+			//For each plane, check collision
+			for (int face=0; face < collisionNode->numFaces; face++)
+			{
+				//Check if teapot collides with plane
+				float planeDistance = collisionNode->collisionTriangles[face]->sphereCollision(newTeapotPosition, teapots[i]->boundingSphereRadius);
+
+				//Collision Detection
+				if (planeDistance == 0.0f)
+				{
+					//Check if teapot is inside the triangle or hits an edge
+					bool faceCollision = collisionNode->collisionTriangles[face]->insideTriangle(newTeapotPosition);
+					bool edgeCollision = collisionNode->collisionTriangles[face]->sphereEdgeCollision(newTeapotPosition, teapots[i]->boundingSphereRadius);
+					if (faceCollision || edgeCollision)
+					{
+						//Stop the teapot
+						teapotVelocityVec.zero();
+					
+						//Check what angle the teapot is colliding with the surface
+						float test = dotProduct(*teapots[i]->heading, collisionNode->collisionTriangles[face]->normal);	
+
+						//cout << "Test: " << test << endl;
+
+						if (test == -1.0f)
+						{
+							//Teapot has collided at 90 degrees
+							int randomNumber = (rand() % 20 + 1) - 10; //between 1-20
+							if (randomNumber > 0)
+							{
+								teapots[i]->rotateHeading(rotrate);
+							} else {
+								teapots[i]->rotateHeading(-rotrate);
+							}
+						} else {
+							//Teapot has collided at an angle. 
+							//calculate reflection vector  R = V-(2*V.N)N
+							Vector3 V = *teapots[i]->heading;
+							Vector3 R = V - collisionNode->collisionTriangles[face]->normal * (2 * dotProduct(V, collisionNode->collisionTriangles[face]->normal));
+							R.normalize();
+
+							float reflectionAngle = acos(dotProduct(V, R)) * RADIANSTODEGREES;
+					
+							//Create rotation tests
+							Matrix4 rotMatrixClockwise; rotMatrixClockwise.rotate(upVector, -5.0f);
+							Matrix4 rotMatrixCClockwise; rotMatrixCClockwise.rotate(upVector, 5.0f);
+							Vector3 V_clockwise = rotMatrixClockwise * V; 
+							Vector3 V_cclockwise = rotMatrixCClockwise * V; 
+
+							float clockwiseAngle = acos(dotProduct(V_clockwise, R)) * RADIANSTODEGREES;
+							float cclockwiseAngle = acos(dotProduct(V_cclockwise, R)) * RADIANSTODEGREES;
+
+							/*
+							cout << "\nReflection Angle: " << reflectionAngle << endl;
+							cout << "Clockwise rotation angle: " << clockwiseAngle << endl;
+							cout << "Counter-Clockwise rotation angle: " << cclockwiseAngle << endl;
+							*/
+
+							if (clockwiseAngle < cclockwiseAngle)
+							{
+								//Rotate clockwise
+								teapots[i]->rotateHeading(-rotrate);
+							} else {
+								//Rotate counter clockwise
+								teapots[i]->rotateHeading(rotrate + 0.5f);	//Note the offset is to prevent us from getting stuck on 90 degree edges
+							}
+
+						}
+
+						//break;	//We've collided. Don't bother doing further testing
+
+					} 
+			
+				}
+			}
+
+			//Set final teapot position
+			teapotPosition = teapotPosition + teapotVelocityVec;
+			teapots[i]->setTranslation(teapotPosition.x, teapotPosition.y, teapotPosition.z);
+		}
+
+	}
+}
+
+/**
+ Main update pass
+ //Note that the value input here is not used
+ **/
+static void update(int val)
+{
+	
+	// Set up the next timer tick (do this first)	
+	glutTimerFunc(TIMERMSECS, update, 0);
+	
+	// Measure the elapsed time
+	int currTime = glutGet(GLUT_ELAPSED_TIME);
+	int timeSincePrevFrame = currTime - prevTime;
+	int elapsedTime = currTime - startTime;
+	
+	update_player_movement();
+	update_teapot_movements();
+	update_collision_detection();
+	update_AI();
+	
 	//Post redisplay
 	glutPostRedisplay();
 	
@@ -350,7 +697,7 @@ static void display()
 	
 	sceneGraph->render();
 		
-	profiler();
+	drawPlayerStatus();
 	
 	glutSwapBuffers();
 	glFlush();
@@ -577,9 +924,13 @@ Node* loadLevel()
 	chestNode->attachTexture("textures/chest.bmp");
 	levelNode->addChild(chestNode);
 
-	PolyMeshNode* ottomanNode = new PolyMeshNode("ottman", "models/ottoman.obj");
-	ottomanNode->attachTexture("textures/ottoman.bmp");
-	levelNode->addChild(ottomanNode);
+	PolyMeshNode* cornellbox = new PolyMeshNode("cornellbox", "models/cornellbox.obj");
+	cornellbox->attachTexture("textures/cornelltexture.bmp");
+	levelNode->addChild(cornellbox);
+
+	PolyMeshNode* cornelllight = new PolyMeshNode("cornelllight", "models/cornelllight.obj");
+	cornelllight->material->setDiffuseAndAmbient(1.0f, 1.0f, 1.0f, 1.0f);
+	levelNode->addChild(cornelllight);
 
 	PolyMeshNode* tableNode = new PolyMeshNode("table", "models/table.obj");
 	tableNode->attachTexture("textures/table.bmp");
@@ -645,7 +996,7 @@ static void init()
 	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 	glLineWidth (1);
 	
-	glClearColor(0.2, 0.2, 0.2, 0.0);
+	glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 
 	//Load models
 	OBJModel* ballOBJ = new OBJModel("models/ball.obj");
@@ -668,7 +1019,7 @@ static void init()
 	ballRotationNode->addChild(ballMeshNode);
 
 	ballPositionNode = new TransformNode("ballPosition", TRANSLATE);
-	ballPositionNode->setTranslation(0.0f, ballRadius, 0.0f);		//Center of the ball is 2.5 up
+	ballPositionNode->setTranslation(0.0f, ballRadius, 10.0f);		//Center of the ball is 2.5 up
 	ballPositionNode->addChild(ballRotationNode);
 	
 	//Offset the camera upwards slightly
@@ -710,12 +1061,46 @@ static void init()
 	sceneGraph->rootNode->addChild(lightNode2);
 	sceneGraph->rootNode->addChild(lightNode3);
 
-
 	//Load the level into the root node
 	sceneGraph->rootNode->addChild(loadLevel());
 
+	//Load the goal for the teapots
+	goal = new PolyMeshNode("goal", "models/goal.obj");
+	goal->visible = false;
+	goal->setTranslation(49.247f, 0.0f, 40.978f);
+	goal->colliderSphereRadius = 8.5f;
+	sceneGraph->rootNode->addChild(goal);
+
+	//Load Teapots
+	OBJModel* teapotOBJ = new OBJModel("models/teapot.obj");
+	OBJModel* exclamationOBJ = new OBJModel("models/exclamation.obj");
+
+	teapots = new NPC*[numTeapots];
+	for (int i=0; i<numTeapots; i++)
+	{
+		//Create polymeshnodes
+		char name[128];
+		sprintf(name, "teapotmesh%i", i);
+		PolyMeshNode* teapotMesh = new PolyMeshNode(name);
+		teapotMesh->attachModel(teapotOBJ);
+		sprintf(name, "exclamation%i", i);
+		PolyMeshNode* exclamation = new PolyMeshNode(name);
+		exclamation->material->setDiffuseAndAmbient(1.0f, 1.0f, 0.0f);
+		exclamation->attachModel(exclamationOBJ);
+		exclamation->visible = false;
+
+		sprintf(name, "teapot%i", i);
+		teapots[i] = new NPC(name, teapotMesh);
+		teapots[i]->setBoundingSphereRadius(2.5f);
+		teapots[i]->exclamation = exclamation;
+		teapots[i]->meshNode->addChild(exclamation);
+		teapots[i]->setTranslation(i*5.0f, 2.5f, 0.0f);
+		teapots[i]->rotateHeading(i*10.0f);
+		sceneGraph->rootNode->addChild(teapots[i]);
+	}
+
 	//Load collision mesh - test collision is models/testcollider.obj, live is collision.obj
-	collisionNode = new PolyMeshNode("collision", "models/collision.obj");
+	collisionNode = new PolyMeshNode("collision", "models/collision5.obj");
 	collisionNode->staticCollider = true;
 	collisionNode->initStaticCollider();
 	//sceneGraph->rootNode->addChild(collisionNode);
@@ -737,10 +1122,8 @@ void setShaders()
  Main function
  **/
 int main(int argc, char** argv)
-{
-	
-	//Get current directory
-	
+{	
+
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(640, 480);
@@ -751,12 +1134,15 @@ int main(int argc, char** argv)
 	GLenum err = glewInit();
 	if (GLEW_OK != err)
 	{
-		/* Problem: glewInit failed, something is seriously wrong. */
+		//Problem: glewInit failed, something is seriously wrong.
 		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
 		exit(1);
 	}
 	fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
 	
+	//Create a random number seed
+	srand ( time(NULL) );
+
 	init();
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
@@ -769,7 +1155,7 @@ int main(int argc, char** argv)
 	//glutIdleFunc(animate);
 	
 	// Start the timer
-    glutTimerFunc(TIMERMSECS, animate, 0);
+    glutTimerFunc(TIMERMSECS, update, 0);
 	
 	// Initialize the time variables
 	startTime = glutGet(GLUT_ELAPSED_TIME);
@@ -778,5 +1164,6 @@ int main(int argc, char** argv)
 	glutMainLoop();
 	
 	exit(0);
+	
 	
 }

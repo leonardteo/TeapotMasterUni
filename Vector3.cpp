@@ -31,7 +31,7 @@ Vector3 Vector3::crossProduct(Vector3 in)
 
 float Vector3::length()
 {
-	return sqrt(pow(this->x, 2) + pow(this->y, 2) + pow(this->z, 2));
+	return sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
 }
 
 void Vector3::normalize()

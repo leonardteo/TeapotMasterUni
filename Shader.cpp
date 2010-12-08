@@ -124,6 +124,7 @@ Link
 **/
 bool Shader::link()
 {
+	return true;
 }
 
 /**

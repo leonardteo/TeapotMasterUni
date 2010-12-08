@@ -25,7 +25,7 @@ public:
 
 	//Checks if a point is inside the triangle defining the plane
 	//Optional sphereRadius to check that the sphere really doesn't intersect
-	bool insideTriangle(Vector3 point, float sphereRadius = 0.0f);
+	bool insideTriangle(Vector3 point);
 
 	//Edge/sphere intersection. For nasty corners
 	bool sphereEdgeCollision(Vector3 sphereCenter, float sphereRadius);
