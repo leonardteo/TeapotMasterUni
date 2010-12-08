@@ -1177,10 +1177,25 @@ int main(int argc, char** argv)
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutInitWindowSize(640, 480);
+	glutInitWindowSize(800, 600);
 	glutInitWindowPosition(100, 100);
+	
+	/* In case you want to demo in full screen.... use this and comment out glutCreateWindow
+	//Determine screen resolution
+	int screenwidth = glutGet(GLUT_SCREEN_WIDTH);
+	int screenheight = glutGet(GLUT_SCREEN_HEIGHT);	
+	
+	char gamemodestring[30];
+	sprintf(gamemodestring, "%ix%i:24", screenwidth, screenheight);
+	
+	glutGameModeString(gamemodestring);
+	glutEnterGameMode(); 
+	 */
+	
 	glutCreateWindow("Teapot Master - Leonard Teo");
 	
+	
+
 	//Initialize GLEW
 	GLenum err = glewInit();
 	if (GLEW_OK != err)
