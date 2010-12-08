@@ -1,3 +1,4 @@
+#version 120
 //Fragment Shader
 
 //Inputs from vertex shader

@@ -1,3 +1,5 @@
+#version 120
+
 //Blinn Shader
 varying vec3 surfaceNormal;
 varying vec3 vertexPosition;

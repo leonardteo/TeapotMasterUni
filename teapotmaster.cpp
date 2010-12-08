@@ -766,7 +766,6 @@ static void keyboard(unsigned char key, int mx, int my)
 			} else {
 				cout << "Turning off shaders" << endl;
 				sceneGraph->getNode("ball")->shader = NULL;
-				sceneGraph->getNode("ground")->shader = NULL;
 			}
 			break;
 			
