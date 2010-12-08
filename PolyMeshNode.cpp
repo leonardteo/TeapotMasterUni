@@ -23,7 +23,6 @@ void PolyMeshNode::init()
 	this->colliderSphereRadius = 0.0f;
 
 	this->numFaces = 0;
-	this->visible = true;
 }
 
 //Constructor
@@ -267,14 +266,15 @@ void PolyMeshNode::render(enum RenderType renderType)
 				}
 
 			}
-		}
-		
-		//Draw children
-		for (list<Node*>::iterator child = this->children->begin(); child != this->children->end(); child++)
-		{
-			(*child)->render(renderType);
-		}
 
+			//Draw children - note that children are only drawn if the parent is visible
+			for (list<Node*>::iterator child = this->children->begin(); child != this->children->end(); child++)
+			{
+				(*child)->render(renderType);
+			}
+
+		} //end if visible
+		
 
 	glPopMatrix();	
 }

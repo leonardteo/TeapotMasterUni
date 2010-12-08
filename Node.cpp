@@ -16,6 +16,7 @@ void Node::init()
 	this->scale = new Vector3(1.0f, 1.0f, 1.0f);
 	this->rotate = new Vector3();
 	this->translate = new Vector3();	
+	this->visible = true;
 }
 
 //Constructor
@@ -69,31 +70,34 @@ void Node::setParent(Node* parent)
 void Node::modelTransform()
 {
 	glTranslatef(this->translate->x, this->translate->y, this->translate->z);
-	
+
 	//This piece of code is not good because the order of rotation is actually important. 
 	//We need to figure out a way to rotate an entire local coordinate system.
 	//This should be relatively simple but we'll need to figure it out... 
 	glRotatef(this->rotate->z, 0.0f, 0.0f, 1.0f);
 	glRotatef(this->rotate->y, 0.0f, 1.0f, 0.0f);
 	glRotatef(this->rotate->x, 1.0f, 0.0f, 0.0f);
-	
-	glScalef(this->scale->x, this->scale->y, this->scale->z);
+
+	//glScalef(this->scale->x, this->scale->y, this->scale->z);
 }
 
 //Abstract method for rendering - must be overloaded by child classes
 void Node::render(RenderType renderType)
 {	
-	glPushMatrix();
-	
-	//Model transform
-	this->modelTransform();
-	
-	for (list<Node*>::iterator child = this->children->begin(); child != this->children->end(); child++)
+	if (this->visible)
 	{
-		(*child)->render(renderType);
-	}
+		glPushMatrix();
 	
-	glPopMatrix();
+		//Model transform
+		this->modelTransform();
+	
+		for (list<Node*>::iterator child = this->children->begin(); child != this->children->end(); child++)
+		{
+			(*child)->render(renderType);
+		}
+	
+		glPopMatrix();
+	}
 }
 
 //Abstract method for doing view transformations

@@ -40,7 +40,6 @@ public:
 	Material* material;
 	CollisionTriangle** collisionTriangles;
 	int numFaces;
-	bool visible;
 
 	//Collision Detection - if using polymesh as a collider object
 	bool staticCollider;

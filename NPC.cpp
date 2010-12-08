@@ -1,12 +1,15 @@
 #include "NPC.h"
 
 
-NPC::NPC(string id, PolyMeshNode* mesh) : TransformNode(id, TRANSLATE)
+NPC::NPC(string id, Node* node) : TransformNode(id, TRANSLATE)
 {
-	this->meshNode = mesh;
+	this->meshNode = node;
 	this->exclamation = NULL;
+	this->leftFoot = NULL;
+	this->rightFoot = NULL;
+	this->wobbleNode = NULL;
 	this->addChild(this->meshNode);
-
+	
 	//Initialize speed and heading
 	this->velocity = 0.2f;
 	this->heading = new Vector3(0.0f, 0.0f, 1.0f);
@@ -16,6 +19,8 @@ NPC::NPC(string id, PolyMeshNode* mesh) : TransformNode(id, TRANSLATE)
 
 	this->alarmed = false;
 	this->finished = false;
+
+	this->animationT = 0.0f;
 }
 
 void NPC::setBoundingSphereRadius(float radius)

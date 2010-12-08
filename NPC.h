@@ -13,12 +13,25 @@ Non-player character class
 class NPC : public TransformNode
 {
 public:
-	NPC(string id, PolyMeshNode* mesh);
+	NPC(string id, Node* node);
 	~NPC(void);
 
 	//Data members
-	PolyMeshNode* meshNode;
+
+	//Scene graph structure
+	//meshNode->exclamation
+	//meshNode->exclamation
+	//meshNode->leftFoot;
+	//meshNode->rightFoot;
+	//this->wobbleNode->meshNode
+	Node* meshNode;
 	PolyMeshNode* exclamation;
+	PolyMeshNode* leftFoot;
+	PolyMeshNode* rightFoot;
+	TransformNode* wobbleNode;
+
+	float animationT;	//Artificial coefficient for helping with animation
+
 	Vector3* heading;
 	float velocity;
 	bool alarmed;

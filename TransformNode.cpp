@@ -29,47 +29,51 @@ void TransformNode::rotateBall(Vector3 axis, float angle)
 //Do all translations then render child nodes
 void TransformNode::render(enum RenderType renderType)
 {
-	//Remember where we are
-	glPushMatrix();
-	
-	switch (this->transformType)
+	if (this->visible)
 	{
-		case TRANSLATE:
-			glTranslatef((GLfloat)this->translate->x, (GLfloat)this->translate->y, (GLfloat)this->translate->z);
-			break;
-		case ROTATE:
-			glRotatef((GLfloat)this->rotate->x, (GLfloat)1.0f, (GLfloat)0.0f, (GLfloat)0.0f);
-			glRotatef((GLfloat)this->rotate->y, (GLfloat)0.0f, (GLfloat)1.0f, (GLfloat)0.0f);
-			glRotatef((GLfloat)this->rotate->z, (GLfloat)0.0f, (GLfloat)0.0f, (GLfloat)1.0f);
-			break;
-		case SCALE:
-			glScalef((GLfloat)this->scale->x, (GLfloat)this->scale->y, (GLfloat)this->scale->z);
-			break;
-		case BALLROTATE:
+		//Remember where we are
+		glPushMatrix();
+	
+		switch (this->transformType)
+		{
+			case TRANSLATE:
+				glTranslatef((GLfloat)this->translate->x, (GLfloat)this->translate->y, (GLfloat)this->translate->z);
+				break;
+			case ROTATE:
+				glTranslatef((GLfloat)this->translate->x, (GLfloat)this->translate->y, (GLfloat)this->translate->z);	//This might be incorrect to be here....
+				glRotatef((GLfloat)this->rotate->x, (GLfloat)1.0f, (GLfloat)0.0f, (GLfloat)0.0f);
+				glRotatef((GLfloat)this->rotate->y, (GLfloat)0.0f, (GLfloat)1.0f, (GLfloat)0.0f);
+				glRotatef((GLfloat)this->rotate->z, (GLfloat)0.0f, (GLfloat)0.0f, (GLfloat)1.0f);
+				
+				break;
+			case SCALE:
+				glScalef((GLfloat)this->scale->x, (GLfloat)this->scale->y, (GLfloat)this->scale->z);
+				break;
+			case BALLROTATE:
 
-			glRotatef((GLfloat)this->ballAngleDisplacement, (GLfloat)this->ballAxis.x, (GLfloat)this->ballAxis.y, (GLfloat)this->ballAxis.z);
-			glMultMatrixf(this->ballRotationMatrix.m);
-
-			//Save just the rotation matrix for the glRotate
-			glPushMatrix();
-				glLoadIdentity();
 				glRotatef((GLfloat)this->ballAngleDisplacement, (GLfloat)this->ballAxis.x, (GLfloat)this->ballAxis.y, (GLfloat)this->ballAxis.z);
 				glMultMatrixf(this->ballRotationMatrix.m);
+
+				//Save just the rotation matrix for the glRotate
+				glPushMatrix();
+					glLoadIdentity();
+					glRotatef((GLfloat)this->ballAngleDisplacement, (GLfloat)this->ballAxis.x, (GLfloat)this->ballAxis.y, (GLfloat)this->ballAxis.z);
+					glMultMatrixf(this->ballRotationMatrix.m);
 				
-				glGetFloatv(GL_MODELVIEW_MATRIX, this->ballRotationMatrix.m);	//Save the current matrix
-			glPopMatrix();
+					glGetFloatv(GL_MODELVIEW_MATRIX, this->ballRotationMatrix.m);	//Save the current matrix
+				glPopMatrix();
 			
-			break;
+				break;
 
-	}
+		}
 	
-	//Render children
-	for (list<Node*>::iterator child = this->children->begin(); child != this->children->end(); child++)
-	{
-		(*child)->render();
-	}
+		//Render children
+		for (list<Node*>::iterator child = this->children->begin(); child != this->children->end(); child++)
+		{
+			(*child)->render();
+		}
 
 	
-	glPopMatrix();	
-	
+		glPopMatrix();	
+	} //end if visible
 }

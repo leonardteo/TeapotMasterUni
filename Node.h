@@ -44,6 +44,7 @@ public:
 	list<Node*>* children;	//Child nodes
 	Node* parent;				//The node's parent
 	string id;					//The node's ID so that we can search for a node
+	bool visible;
 
 	//Shader
 	Shader* shader;

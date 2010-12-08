@@ -431,8 +431,7 @@ static void update_teapot_movements()
 			{
 				//Teapot has reached the goal. Get rid of it
 				teapots[i]->finished = true;
-				teapots[i]->meshNode->visible = false;
-				teapots[i]->exclamation->visible = false;
+				teapots[i]->visible = false;
 
 				teapotsLeft--;
 
@@ -452,10 +451,7 @@ static void update_teapot_movements()
 			{
 				//Teapot is alarmed. Show exclamation mark
 				teapots[i]->alarmed = true;
-				if (!teapots[i]->finished)
-				{
-					teapots[i]->exclamation->visible = true;
-				}
+				teapots[i]->exclamation->visible = true;
 				
 				//Check if teapot is looking towards the player
 				teapot_to_player.normalize();
@@ -502,6 +498,22 @@ static void update_teapot_movements()
 				teapots[i]->velocity = 0.2f;
 			}
 	
+
+			/**
+			Teapot Model Animation 
+			**/
+			//Feet
+			teapots[i]->animationT += (teapots[i]->velocity + 0.3f);	//Rate of animation is linked to velocity, so the teapot goes, the faster his feet move
+			if (teapots[i]->animationT > 360.0f) teapots[i]->animationT -= 360.0f;	//Limit the rate to avoid floating number limit
+			float z = sin(teapots[i]->animationT) * 0.2f;
+			teapots[i]->rightFoot->setTranslation(0.0f, 0.0f, z);
+			teapots[i]->leftFoot->setTranslation(0.0f, 0.0f, -z);
+
+			//Rotation
+			float rotz = sin(teapots[i]->animationT) * 5.0f;
+			teapots[i]->wobbleNode->rotate->z = -rotz;
+			
+
 
 			/**
 			Teapot Moving
@@ -1074,6 +1086,13 @@ static void init()
 	//Load Teapots
 	OBJModel* teapotOBJ = new OBJModel("models/teapot.obj");
 	OBJModel* exclamationOBJ = new OBJModel("models/exclamation.obj");
+	OBJModel* teapot_leftfootOBJ = new OBJModel("models/teapot_leftfoot.obj");
+	OBJModel* teapot_rightfootOBJ = new OBJModel("models/teapot_rightfoot.obj");
+	Texture* teapotTexture = new Texture("textures/teapottexture.bmp");
+	Material* teapotMaterial = new Material();
+	teapotMaterial->setDiffuse(1.0f, 1.0f, 1.0f);
+	teapotMaterial->setSpecular(0.2f, 0.2f, 0.2f);
+	teapotMaterial->setShininess(100.0f);
 
 	teapots = new NPC*[numTeapots];
 	for (int i=0; i<numTeapots; i++)
@@ -1082,25 +1101,58 @@ static void init()
 		char name[128];
 		sprintf(name, "teapotmesh%i", i);
 		PolyMeshNode* teapotMesh = new PolyMeshNode(name);
+		teapotMesh->attachShader(blinnShader);
+		teapotMesh->attachTexture(teapotTexture);
 		teapotMesh->attachModel(teapotOBJ);
+		teapotMesh->attachMaterial(teapotMaterial);
 		sprintf(name, "exclamation%i", i);
 		PolyMeshNode* exclamation = new PolyMeshNode(name);
 		exclamation->material->setDiffuseAndAmbient(1.0f, 1.0f, 0.0f);
 		exclamation->attachModel(exclamationOBJ);
 		exclamation->visible = false;
 
+		//Load feet
+		sprintf(name, "teapot_leftfoot_%i", i);
+		PolyMeshNode* teapotLeftFoot = new PolyMeshNode(name);
+		teapotLeftFoot->attachTexture(teapotTexture);
+		teapotLeftFoot->attachModel(teapot_leftfootOBJ);
+		teapotLeftFoot->attachShader(blinnShader);
+		teapotLeftFoot->attachMaterial(teapotMaterial);
+		sprintf(name, "teapot_rightfoot_%i", i);
+		PolyMeshNode* teapotRightFoot = new PolyMeshNode(name);
+		teapotRightFoot->attachTexture(teapotTexture);
+		teapotRightFoot->attachModel(teapot_rightfootOBJ);
+		teapotRightFoot->attachShader(blinnShader);
+		teapotRightFoot->attachMaterial(teapotMaterial);
+
+		//Wobble Node
+		sprintf(name, "teapot_wobble_%i", i);
+		TransformNode* wobbleNode = new TransformNode(name, ROTATE);
+
+		//Create character hierarchy
+		wobbleNode->addChild(teapotMesh);
+		teapotMesh->addChild(teapotLeftFoot);
+		teapotMesh->addChild(teapotRightFoot);
+
+		//Instantiate teapot
 		sprintf(name, "teapot%i", i);
-		teapots[i] = new NPC(name, teapotMesh);
+		teapots[i] = new NPC(name, wobbleNode);
+		teapots[i]->setTranslation(i*5.0f, 2.5f, 0.0f);	//y is just up from the ground
+		teapots[i]->rotateHeading(i*10.0f);
+		teapots[i]->wobbleNode = wobbleNode;
+		teapots[i]->wobbleNode->setTranslation(0.0f, -2.5f, 0.0f); //Offset downwards
 		teapots[i]->setBoundingSphereRadius(2.5f);
 		teapots[i]->exclamation = exclamation;
-		teapots[i]->meshNode->addChild(exclamation);
-		teapots[i]->setTranslation(i*5.0f, 2.5f, 0.0f);
-		teapots[i]->rotateHeading(i*10.0f);
+		exclamation->setTranslation(0.0f, -2.5f, 0.0f);
+		teapots[i]->leftFoot = teapotLeftFoot;
+		teapots[i]->rightFoot = teapotRightFoot;
+		teapots[i]->addChild(exclamation);
+
 		sceneGraph->rootNode->addChild(teapots[i]);
 	}
 
 	//Load collision mesh - test collision is models/testcollider.obj, live is collision.obj
-	collisionNode = new PolyMeshNode("collision", "models/collision5.obj");
+	collisionNode = new PolyMeshNode("collision", "models/collision.obj");
 	collisionNode->staticCollider = true;
 	collisionNode->initStaticCollider();
 	//sceneGraph->rootNode->addChild(collisionNode);
