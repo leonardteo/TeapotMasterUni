@@ -114,18 +114,12 @@ bool Shader::compile()
 		return false;
 	}
 
-	cout << "Compiled and linked shaders" << endl;
+	cout << "Successfully compiled and linked shaders: " << endl;
 	return true;
 
 }
 
-/**
-Link
-**/
-bool Shader::link()
-{
-	return true;
-}
+
 
 /**
 Reads a text file and returns a pointer to the char string

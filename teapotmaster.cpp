@@ -113,7 +113,7 @@ Vector3 teapot1Position;		//To encapsulate into a class...
 
 //Shaders
 bool useShaders = true;
-Shader* basicShader;
+Shader* blinnShader;
 void setShaders();
 
 Shader* floorShader;
@@ -687,13 +687,19 @@ static void update(int val)
 }
 
 /**
+Reset Projection
+**/
+static void setProjection(int newWidth, int newHeight)
+{
+	//Set the projection
+	ballCam->setProjection(newWidth, newHeight);
+}
+
+/**
  Display function
  **/
 static void display()
 {
-	
-	//Set the projection
-	ballCam->setProjection(width, height);
 	
 	//Clear the screen
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -712,7 +718,6 @@ static void display()
 	drawPlayerStatus();
 	
 	glutSwapBuffers();
-	glFlush();
 	
 }
 
@@ -726,6 +731,9 @@ static void reshape(int new_width, int new_height)
 	width = new_width;
 	height = new_height;
 	
+	//Reset the projection
+	setProjection(width, height);
+
 	//Reset the viewport
 	glViewport(0, 0, width, height);
 
@@ -739,7 +747,7 @@ static void keyboard(unsigned char key, int mx, int my)
 {
 	switch (key)
 	{
-			
+		
 		case 'w':	//move ball forward
 			wPressed = true;
 			break;
@@ -752,11 +760,24 @@ static void keyboard(unsigned char key, int mx, int my)
 		case 'd':	//move ball right
 			dPressed = true;
 			break;
-
-		case 'p':
-			debug();
+		
+		case '+':
+			ballCam->distance -= 1.0f;
+			if (ballCam->distance < 10.0f)
+			{
+				ballCam->distance = 10.0f;
+				setProjection(width, height);
+			}
 			break;
-			
+
+		case '-':
+			ballCam->distance += 1.0f;
+			if (ballCam->distance > 30.0f)
+			{
+				ballCam->distance = 30.0f;
+				setProjection(width, height);
+			}
+			break;
 
 		case 'o':
 			useShaders = !useShaders;
@@ -999,14 +1020,16 @@ static void init()
 	glEnable(GL_DEPTH_TEST);
 	
 	//Anti-Aliasing & transparency
+	/*
 	glEnable (GL_LINE_SMOOTH);
 	glEnable(GL_POLYGON_SMOOTH);
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 	glLineWidth (1);
-	
+	*/
+
 	glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 
 	//Load models
@@ -1043,6 +1066,7 @@ static void init()
 	ballCam->fov = 90.0f;
 	ballCam->distance = 20.0f;
 	ballCam->elevation = 20.0f;
+	ballCam->farPlane = 600.0f;
 	ballCamOffset->addChild(ballCam);
 	
 	//Create a default light
@@ -1060,7 +1084,7 @@ static void init()
 	lightNode3->intensity = 0.2f;
 	
 	//Load blinn shader
-	Shader* blinnShader = new Shader();
+	blinnShader = new Shader();
 	blinnShader->loadVertexShader("shaders/blinn.vert");
 	blinnShader->loadFragmentShader("shaders/blinn.frag");
 	blinnShader->compile();
@@ -1162,11 +1186,11 @@ static void init()
 void setShaders()
 {
 	//Attach ball shader
-	basicShader = new Shader();
-	basicShader->loadVertexShader("shaders/blinn.vert");
-	basicShader->loadFragmentShader("shaders/blinn.frag");
-	basicShader->compile();
-	sceneGraph->getNode("ball")->attachShader(basicShader);
+	blinnShader = new Shader();
+	blinnShader->loadVertexShader("shaders/blinn.vert");
+	blinnShader->loadFragmentShader("shaders/blinn.frag");
+	blinnShader->compile();
+	sceneGraph->getNode("ball")->attachShader(blinnShader);
 }
 
 /**
@@ -1180,8 +1204,9 @@ int main(int argc, char** argv)
 	glutInitWindowSize(800, 600);
 	glutInitWindowPosition(100, 100);
 	
-	/* In case you want to demo in full screen.... use this and comment out glutCreateWindow
+	//In case you want to demo in full screen.... use this and comment out glutCreateWindow
 	//Determine screen resolution
+	/*
 	int screenwidth = glutGet(GLUT_SCREEN_WIDTH);
 	int screenheight = glutGet(GLUT_SCREEN_HEIGHT);	
 	
@@ -1190,7 +1215,7 @@ int main(int argc, char** argv)
 	
 	glutGameModeString(gamemodestring);
 	glutEnterGameMode(); 
-	 */
+	*/
 	
 	glutCreateWindow("Teapot Master - Leonard Teo");
 	

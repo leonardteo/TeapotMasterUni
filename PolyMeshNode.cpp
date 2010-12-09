@@ -133,7 +133,6 @@ void PolyMeshNode::draw()
 
 	} else {
 	
-
 		//Drawing with vertex arrays
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_NORMAL_ARRAY);

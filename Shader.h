@@ -44,7 +44,7 @@ public:
 
 	//Compilation and linking
 	bool compile();
-	bool link();
+
 
 private:
 	char* readTextFile(char* filename);
