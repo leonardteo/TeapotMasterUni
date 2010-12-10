@@ -1,7 +1,7 @@
 #version 120
 
 //Lame attempt to get ready for version #150 haha...
-in vec3 vertex;
+attribute vec3 vertex;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 

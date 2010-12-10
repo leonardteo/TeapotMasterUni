@@ -24,3 +24,5 @@ void main()
 	//projShadow = gl_TextureMatrix[1] * gl_Vertex;
 
 }
+
+
