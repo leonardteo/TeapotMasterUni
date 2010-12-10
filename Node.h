@@ -67,6 +67,7 @@ public:
 	Vector3 getPosition();
 	void modelTransform();
 	void attachShader(Shader* shader);
+
 	
 private:
 	void init();

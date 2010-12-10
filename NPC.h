@@ -28,6 +28,7 @@ public:
 	PolyMeshNode* exclamation;
 	PolyMeshNode* leftFoot;
 	PolyMeshNode* rightFoot;
+	PolyMeshNode* shadow;
 	TransformNode* wobbleNode;
 
 	float animationT;	//Artificial coefficient for helping with animation

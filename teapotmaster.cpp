@@ -107,20 +107,24 @@ PolyMeshNode* collisionNode;
 
 //Teapots
 NPC** teapots;	//Array of teapots
-const int numTeapots = 5;
+const int numTeapots = 10;
 int teapotsLeft = numTeapots;
 Vector3 teapot1Position;		//To encapsulate into a class...
 
 //Shaders
 bool useShaders = true;
 Shader* blinnShader;
-void setShaders();
+//void setShaders();
 
 Shader* floorShader;
 
 //Goal for the teapots
 PolyMeshNode* goal;
 
+//Shadow mapping variables
+LightNode* lightNode;
+GLuint shadowMapFBO;
+GLuint shadowMapTexture;
 
 /** 
 DebugText
@@ -207,25 +211,6 @@ static void profiler()
 	
 }
 
-
-/**
-AI Pass
-**/
-static void update_AI()
-{
-	
-}
-
-/**
-Collision Detection
-**/
-static void update_collision_detection()
-{
-
-
-
-
-}
 
 /**
 Player Movement pass
@@ -675,8 +660,6 @@ static void update(int val)
 	
 	update_player_movement();
 	update_teapot_movements();
-	update_collision_detection();
-	update_AI();
 	
 	//Post redisplay
 	glutPostRedisplay();
@@ -693,13 +676,48 @@ static void setProjection(int newWidth, int newHeight)
 {
 	//Set the projection
 	ballCam->setProjection(newWidth, newHeight);
+
 }
+
+
 
 /**
  Display function
  **/
 static void display()
 {
+	/**
+	Draw Shadow Map
+	**/
+	/*
+	glViewport(0,0,width * 2, height * 2);	//Render to twice the resolution
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); //Disable color rendering
+
+	glCullFace(GL_FRONT);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	//View transformation from the light point of view
+	glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
+	lightNode->viewTransform();
+
+	//Render the scene
+	sceneGraph->render();
+
+	//Restore settings for main rendering routine
+	glViewport(0,0,width, height);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glCullFace(GL_BACK);
+	glBindTexture(GL_TEXTURE_2D, shadowMapTexture);
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width*2, height*2);
+	*/
+
+	/**
+	Main drawing routine
+	**/
 	
 	//Clear the screen
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -779,6 +797,7 @@ static void keyboard(unsigned char key, int mx, int my)
 			}
 			break;
 
+			/*
 		case 'o':
 			useShaders = !useShaders;
 			if (useShaders){
@@ -789,6 +808,7 @@ static void keyboard(unsigned char key, int mx, int my)
 				sceneGraph->getNode("ball")->shader = NULL;
 			}
 			break;
+			*/
 			
 			//Exit
 		case 27:
@@ -896,110 +916,176 @@ static void mouse_clicks(int button, int state, int mx, int my)
 	
 }
 
+/**
+Initialize shadow map
+**/
+static void initShadowMap()
+{
+	//Create the shadow map texture
+	glGenTextures(1, &shadowMapTexture);
+    glBindTexture(GL_TEXTURE_2D, shadowMapTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width*2, height*2, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+	cout << "Shadow Map ID: " << shadowMapTexture << endl;
+}
 
 /**
 Load the level
 **/
 Node* loadLevel()
 {
+	//Material used for lightmapping
+	Material* material = new Material();
+	material->setDiffuseAndAmbient(1.0f, 1.0f, 1.0f, 1.0f);
+	
 	//Create a null node to load the level mesh
 	TransformNode* levelNode = new TransformNode("level");
 
 	//Load the level
 	PolyMeshNode* floorNode = new PolyMeshNode("floor", "models/floor.obj");
 	floorNode->attachTexture("textures/floor.bmp");
+	floorNode->attachMaterial(material);
+	//floorNode->attachShader(blinnShader);
+
 	levelNode->addChild(floorNode);
 
 	PolyMeshNode* frontWallNode = new PolyMeshNode("frontwall", "models/wall_front.obj");
 	frontWallNode->attachTexture("textures/wall_front.bmp");
+	frontWallNode->attachMaterial(material);
+	//frontWallNode->attachShader(blinnShader);
 	levelNode->addChild(frontWallNode);
 
 	PolyMeshNode* rearWallNode = new PolyMeshNode("rearwall", "models/wall_rear.obj");
 	rearWallNode->attachTexture("textures/wall_rear.bmp");
+	rearWallNode->attachMaterial(material);
+	//rearWallNode->attachShader(blinnShader);
 	levelNode->addChild(rearWallNode);
 
 	PolyMeshNode* rightWallNode = new PolyMeshNode("rightwall", "models/wall_right.obj");
 	rightWallNode->attachTexture("textures/wall_right.bmp");
+	//rightWallNode->attachShader(blinnShader);
+	rightWallNode->attachMaterial(material);
 	levelNode->addChild(rightWallNode);
 
 	PolyMeshNode* leftWallNode = new PolyMeshNode("leftwall", "models/wall_left.obj");
 	leftWallNode->attachTexture("textures/wall_left.bmp");
+	//leftWallNode->attachShader(blinnShader);
+	leftWallNode->attachMaterial(material);
 	levelNode->addChild(leftWallNode);
 
 	PolyMeshNode* ceilingNode = new PolyMeshNode("ceiling", "models/ceiling.obj");
 	ceilingNode->attachTexture("textures/ceiling.bmp");
+	//ceilingNode->attachShader(blinnShader);
+	ceilingNode->attachMaterial(material);
 	levelNode->addChild(ceilingNode);
 
 	PolyMeshNode* mouldingsNode = new PolyMeshNode("mouldings", "models/mouldings.obj");
 	mouldingsNode->attachTexture("textures/mouldings.bmp");
+	//mouldingsNode->attachShader(blinnShader);
+	mouldingsNode->attachMaterial(material);
 	levelNode->addChild(mouldingsNode);
 
 	//Load bed, mattress and blanket
 	PolyMeshNode* bedNode = new PolyMeshNode("bed", "models/bed.obj");
 	bedNode->attachTexture("textures/bed.bmp");
+	//bedNode->attachShader(blinnShader);
+	bedNode->attachMaterial(material);
 	levelNode->addChild(bedNode);
 
 	PolyMeshNode* mattressNode = new PolyMeshNode("mattress", "models/mattress.obj");
 	mattressNode->attachTexture("textures/mattress.bmp");
+	//mattressNode->attachShader(blinnShader);
+	mattressNode->attachMaterial(material);
 	levelNode->addChild(mattressNode);
 
 	PolyMeshNode* blanketNode = new PolyMeshNode("blanket", "models/blanket.obj");
 	blanketNode->attachTexture("textures/blanket.bmp");
+	//blanketNode->attachShader(blinnShader);
+	blanketNode->attachMaterial(material);
 	levelNode->addChild(blanketNode);
 
 	//Load furniture
 	PolyMeshNode* bedsideNode = new PolyMeshNode("bedside", "models/bedside.obj");
 	bedsideNode->attachTexture("textures/bedside.bmp");
+	//bedsideNode->attachShader(blinnShader);
+	bedsideNode->attachMaterial(material);
 	levelNode->addChild(bedsideNode);
 
 	PolyMeshNode* chestNode = new PolyMeshNode("chest", "models/chest.obj");
 	chestNode->attachTexture("textures/chest.bmp");
+	//chestNode->attachShader(blinnShader);
+	chestNode->attachMaterial(material);
 	levelNode->addChild(chestNode);
 
 	PolyMeshNode* cornellbox = new PolyMeshNode("cornellbox", "models/cornellbox.obj");
 	cornellbox->attachTexture("textures/cornelltexture.bmp");
+	//cornellbox->attachShader(blinnShader);
+	cornellbox->attachMaterial(material);
 	levelNode->addChild(cornellbox);
 
 	PolyMeshNode* cornelllight = new PolyMeshNode("cornelllight", "models/cornelllight.obj");
 	cornelllight->material->setDiffuseAndAmbient(1.0f, 1.0f, 1.0f, 1.0f);
+	//cornelllight->attachShader(blinnShader);	
 	levelNode->addChild(cornelllight);
 
 	PolyMeshNode* tableNode = new PolyMeshNode("table", "models/table.obj");
 	tableNode->attachTexture("textures/table.bmp");
+	//tableNode->attachShader(blinnShader);
+	tableNode->attachMaterial(material);
 	levelNode->addChild(tableNode);
 
 	PolyMeshNode* shelfNode = new PolyMeshNode("shelf", "models/shelf.obj");
 	shelfNode->attachTexture("textures/shelf.bmp");
+	//shelfNode->attachShader(blinnShader);
+	shelfNode->attachMaterial(material);
 	levelNode->addChild(shelfNode);
 
 	PolyMeshNode* wallShelfNode = new PolyMeshNode("wallshelf", "models/wallshelf.obj");
 	wallShelfNode->attachTexture("textures/wallshelf.bmp");
+	//wallShelfNode->attachShader(blinnShader);
+	wallShelfNode->attachMaterial(material);
 	levelNode->addChild(wallShelfNode);
 
 	PolyMeshNode* dresserNode = new PolyMeshNode("dresser", "models/dresser.obj");
 	dresserNode->attachTexture("textures/dresser.bmp");
+	//dresserNode->attachShader(blinnShader);
+	dresserNode->attachMaterial(material);
 	levelNode->addChild(dresserNode);
 
 	//Load doors and windows
 	PolyMeshNode* doorNode = new PolyMeshNode("door", "models/door_left.obj");
 	doorNode->attachTexture("textures/door_left.bmp");
+	//doorNode->attachShader(blinnShader);
+	doorNode->attachMaterial(material);
 	levelNode->addChild(doorNode);
 
 	PolyMeshNode* closetDoorNode = new PolyMeshNode("closetdoor", "models/closetdoor.obj");
 	closetDoorNode->attachTexture("textures/closetdoor.bmp");
+	//closetDoorNode->attachShader(blinnShader);
+	closetDoorNode->attachMaterial(material);
 	levelNode->addChild(closetDoorNode);
 
 	PolyMeshNode* rightWindow = new PolyMeshNode("rightwindow", "models/window_right.obj");
 	rightWindow->attachTexture("textures/window_right.bmp");
+	//rightWindow->attachShader(blinnShader);
+	rightWindow->attachMaterial(material);
 	levelNode->addChild(rightWindow);
 
 	PolyMeshNode* frontWindow = new PolyMeshNode("frontwindow", "models/window_front.obj");
 	frontWindow->attachTexture("textures/window_front.bmp");
+	//frontWindow->attachShader(blinnShader);
+	frontWindow->attachMaterial(material);
 	levelNode->addChild(frontWindow);
 
 	//Load skybox
 	PolyMeshNode* skybox = new PolyMeshNode("skybox", "models/skybox.obj");
 	skybox->attachTexture("textures/skybox.bmp");
+	//skybox->attachShader(blinnShader);
+	skybox->attachMaterial(material);
 	levelNode->addChild(skybox);
 
 	return levelNode;
@@ -1011,6 +1097,13 @@ Node* loadLevel()
  **/
 static void init()
 {
+
+	//Load blinn shader
+	blinnShader = new Shader();
+	blinnShader->loadVertexShader("shaders/blinn_shadowmap.vert");
+	blinnShader->loadFragmentShader("shaders/blinn_shadowmap.frag");
+	blinnShader->compile();
+
 	//OpenGL options
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_TEXTURE_2D);
@@ -1029,8 +1122,9 @@ static void init()
 	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 	glLineWidth (1);
 	*/
-
-	glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
+	glEnable (GL_BLEND);
+	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	//Load models
 	OBJModel* ballOBJ = new OBJModel("models/ball.obj");
@@ -1048,6 +1142,7 @@ static void init()
 	ballMaterial->setSpecular(0.8f, 0.8f, 0.8f, 1.0f);
 	
 	ballMeshNode->attachMaterial(ballMaterial);
+	ballMeshNode->attachShader(blinnShader);
 
 	ballRotationNode = new TransformNode("ballRotation", BALLROTATE);
 	ballRotationNode->addChild(ballMeshNode);
@@ -1055,6 +1150,12 @@ static void init()
 	ballPositionNode = new TransformNode("ballPosition", TRANSLATE);
 	ballPositionNode->setTranslation(0.0f, ballRadius, 10.0f);		//Center of the ball is 2.5 up
 	ballPositionNode->addChild(ballRotationNode);
+
+	//Ball Shadow
+	PolyMeshNode* ballShadow = new PolyMeshNode("ballshadow", "models/ballshadow.obj");
+	ballShadow->attachTexture("textures/ballshadow.png");
+	ballShadow->setTranslation(0.0f, -2.475f, 0.0f);
+	ballPositionNode->addChild(ballShadow);
 	
 	//Offset the camera upwards slightly
 	TransformNode* ballCamOffset = new TransformNode("ballCamOffset", TRANSLATE);
@@ -1070,34 +1171,33 @@ static void init()
 	ballCamOffset->addChild(ballCam);
 	
 	//Create a default light
-	LightNode* lightNode = new LightNode("light", GL_LIGHT0, POINTLIGHT);
-	//lightNode->rotate->x = 45.0f;
-	//lightNode->translate->y = 2.0f;
-	lightNode->setTranslation(0.0f, 50.0f, 0.0f);
+	lightNode = new LightNode("keylight", GL_LIGHT0, POINTLIGHT);
+	lightNode->setTranslation(0.0f, 44.987f, 56.348f);
+	lightNode->rotate->x = 90.0f;
 
-	//Create a few lights
-	LightNode* lightNode2 = new LightNode("light2", GL_LIGHT1, POINTLIGHT);
-	lightNode2->setTranslation(100.0f, 50.0f, 0.0f);
-	lightNode2->intensity = 0.2f;
+	//Fill Light
+	
+	LightNode* lightNode2 = new LightNode("filllight", GL_LIGHT1, POINTLIGHT);
+	lightNode2->setTranslation(67.357f, 42.842f, 0.0f);
+	lightNode2->intensity = 0.5f;
+	/*
 	LightNode* lightNode3 = new LightNode("light3", GL_LIGHT2, POINTLIGHT);
 	lightNode3->setTranslation(-100.0f, 50.0f, 0.0f);
 	lightNode3->intensity = 0.2f;
-	
-	//Load blinn shader
-	blinnShader = new Shader();
-	blinnShader->loadVertexShader("shaders/blinn.vert");
-	blinnShader->loadFragmentShader("shaders/blinn.frag");
-	blinnShader->compile();
+	*/
+
+
 	
 	//Scene Graph
 	sceneGraph = new SceneGraph();
 	sceneGraph->rootNode->addChild(lightNode);
-	sceneGraph->rootNode->addChild(ballPositionNode);
 	sceneGraph->rootNode->addChild(lightNode2);
-	sceneGraph->rootNode->addChild(lightNode3);
+	//sceneGraph->rootNode->addChild(lightNode3);
 
 	//Load the level into the root node
 	sceneGraph->rootNode->addChild(loadLevel());
+
+	sceneGraph->rootNode->addChild(ballPositionNode);
 
 	//Load the goal for the teapots
 	goal = new PolyMeshNode("goal", "models/goal.obj");
@@ -1111,7 +1211,10 @@ static void init()
 	OBJModel* exclamationOBJ = new OBJModel("models/exclamation.obj");
 	OBJModel* teapot_leftfootOBJ = new OBJModel("models/teapot_leftfoot.obj");
 	OBJModel* teapot_rightfootOBJ = new OBJModel("models/teapot_rightfoot.obj");
+	OBJModel* teapot_shadowOBJ = new OBJModel("models/teapot_shadow.obj");
 	Texture* teapotTexture = new Texture("textures/teapottexture.bmp");
+	Texture* teapotShadowTexture = new Texture("textures/teapotshadow.png");
+
 	Material* teapotMaterial = new Material();
 	teapotMaterial->setDiffuse(1.0f, 1.0f, 1.0f);
 	teapotMaterial->setSpecular(0.2f, 0.2f, 0.2f);
@@ -1131,6 +1234,7 @@ static void init()
 		sprintf(name, "exclamation%i", i);
 		PolyMeshNode* exclamation = new PolyMeshNode(name);
 		exclamation->material->setDiffuseAndAmbient(1.0f, 1.0f, 0.0f);
+		//exclamation->attachTexture(exclamationTexture);
 		exclamation->attachModel(exclamationOBJ);
 		exclamation->visible = false;
 
@@ -1157,11 +1261,21 @@ static void init()
 		teapotMesh->addChild(teapotLeftFoot);
 		teapotMesh->addChild(teapotRightFoot);
 
+		//Shadow
+		sprintf(name, "teapot_shadow%i", i);
+		PolyMeshNode* teapotShadow = new PolyMeshNode(name);
+		//Offset the shadows ever so slightly
+		float shadowoffset = i/100.0f;
+		teapotShadow->setTranslation(0.0f, -2.4f + shadowoffset, 0.0f);
+		teapotShadow->attachModel(teapot_shadowOBJ);
+		teapotShadow->attachTexture(teapotShadowTexture);
+
 		//Instantiate teapot
 		sprintf(name, "teapot%i", i);
 		teapots[i] = new NPC(name, wobbleNode);
-		teapots[i]->setTranslation(i*5.0f, 2.5f, 0.0f);	//y is just up from the ground
-		teapots[i]->rotateHeading(i*10.0f);
+		float xposition = i*10.0f - (numTeapots * 10.0f)/2;
+		teapots[i]->setTranslation(xposition, 2.5f, 0.0f);	//y is just up from the ground
+		
 		teapots[i]->wobbleNode = wobbleNode;
 		teapots[i]->wobbleNode->setTranslation(0.0f, -2.5f, 0.0f); //Offset downwards
 		teapots[i]->setBoundingSphereRadius(2.5f);
@@ -1170,6 +1284,9 @@ static void init()
 		teapots[i]->leftFoot = teapotLeftFoot;
 		teapots[i]->rightFoot = teapotRightFoot;
 		teapots[i]->addChild(exclamation);
+		teapots[i]->shadow = teapotShadow;
+		teapots[i]->addChild(teapotShadow);
+		teapots[i]->rotateHeading(i*20.0f);
 
 		sceneGraph->rootNode->addChild(teapots[i]);
 	}
@@ -1180,18 +1297,22 @@ static void init()
 	collisionNode->initStaticCollider();
 	//sceneGraph->rootNode->addChild(collisionNode);
 	
-	setShaders();
-}
+	//setShaders();
 
+	//initShadowMap();
+
+}
+/*
 void setShaders()
 {
 	//Attach ball shader
 	blinnShader = new Shader();
-	blinnShader->loadVertexShader("shaders/blinn.vert");
-	blinnShader->loadFragmentShader("shaders/blinn.frag");
+	blinnShader->loadVertexShader("shaders/blinn_shadowmap.vert");
+	blinnShader->loadFragmentShader("shaders/blinn_shadowmap.frag");
 	blinnShader->compile();
 	sceneGraph->getNode("ball")->attachShader(blinnShader);
 }
+*/
 
 /**
  Main function

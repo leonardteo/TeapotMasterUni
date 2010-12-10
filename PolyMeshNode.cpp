@@ -100,6 +100,17 @@ void PolyMeshNode::draw()
 	if (this->shader != NULL)
 	{
 		glUseProgram(this->shader->shaderProgram);
+
+		//Pass projection matrix to shader
+		GLfloat projectionMatrix[16];
+		glGetFloatv(GL_PROJECTION_MATRIX, projectionMatrix);
+		glUniformMatrix4fv(this->shader->projectionMatrix, 1, false, projectionMatrix);
+
+		//Pass current modelview matrix to shader
+		GLfloat modelViewMatrix[16];
+		glGetFloatv(GL_MODELVIEW_MATRIX, modelViewMatrix);
+		glUniformMatrix4fv(this->shader->modelViewMatrix, 1, false, modelViewMatrix);
+
 	} else {
 		glUseProgram(NULL);
 	}
@@ -112,6 +123,13 @@ void PolyMeshNode::draw()
 		glBindBuffer(GL_ARRAY_BUFFER, this->mesh->vbo_vertices);
 		glVertexPointer(3, GL_FLOAT, 0, BUFFER_OFFSET(0));
 		glEnableClientState(GL_VERTEX_ARRAY);
+
+		if (this->shader != NULL)
+		{
+			//Pass vertices to the shader
+			glVertexAttribPointer(this->shader->vertices, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+			glEnableVertexAttribArray(this->shader->vertices);
+		}
 
 		//Load normals
 		glBindBuffer(GL_ARRAY_BUFFER, this->mesh->vbo_normals);

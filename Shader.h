@@ -45,6 +45,11 @@ public:
 	//Compilation and linking
 	bool compile();
 
+	//Uniforms and varying shader vars
+	GLint modelViewMatrix;
+	GLint projectionMatrix;
+	GLint shadowMap;
+	GLint vertices;
 
 private:
 	char* readTextFile(char* filename);

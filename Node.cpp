@@ -81,6 +81,7 @@ void Node::modelTransform()
 	//glScalef(this->scale->x, this->scale->y, this->scale->z);
 }
 
+
 //Abstract method for rendering - must be overloaded by child classes
 void Node::render(RenderType renderType)
 {	

@@ -15,6 +15,7 @@ Texture class for holding any textures
 #endif
 
 #include "MyBitmap.h"
+#include <SOIL.h>
 
 class Texture
 {

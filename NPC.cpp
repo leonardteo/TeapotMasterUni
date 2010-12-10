@@ -35,6 +35,8 @@ void NPC::rotateHeading(float angle)
 	//Rotate the model
 	//this->rotationNode->rotateBall(axis, angle);
 	this->meshNode->rotate->y += angle;
+	this->exclamation->rotate->y += angle;
+	this->shadow->rotate->y += angle;
 
 	Vector3 axis(0.0f, 1.0f, 0.0f);
 

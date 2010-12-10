@@ -114,7 +114,22 @@ bool Shader::compile()
 		return false;
 	}
 
-	cout << "Successfully compiled and linked shaders: " << endl;
+	//cout << "Successfully compiled and linked shaders." << endl;
+
+	//Get Uniform Locations
+	this->vertices = glGetAttribLocation(shaderProgram, "vertex");
+	this->modelViewMatrix = glGetUniformLocation(shaderProgram, "modelViewMatrix");
+	this->projectionMatrix = glGetUniformLocation(shaderProgram, "projectionMatrix");
+	this->shadowMap = glGetUniformLocation(shaderProgram, "shadowMap");
+
+	/*
+	cout << endl << "Uniform Locations: " << endl;
+	cout << "Shadow Map: " << this->shadowMap << endl;
+	cout << "MV Matrix: " << this->modelViewMatrix << endl;
+	cout << "Proj Matrix: " << this->projectionMatrix << endl;
+	cout << "Vertices: " << this->vertices << endl;
+	*/
+
 	return true;
 
 }
