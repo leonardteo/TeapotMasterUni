@@ -1124,6 +1124,7 @@ static void init()
 	*/
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	//Load models
@@ -1164,19 +1165,23 @@ static void init()
 
 	//Ball Camera
 	ballCam = new CameraNode("ballcam", POLAR);
-	ballCam->fov = 90.0f;
+	ballCam->fov = 70.0f;
 	ballCam->distance = 20.0f;
 	ballCam->elevation = 20.0f;
 	ballCam->farPlane = 600.0f;
 	ballCamOffset->addChild(ballCam);
 	
+	//Set ambient light
+	GLfloat ambient[4] = {0.1f, 0.1f, 0.1f, 1.0f};
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
+	
+
 	//Create a default light
 	lightNode = new LightNode("keylight", GL_LIGHT0, POINTLIGHT);
 	lightNode->setTranslation(0.0f, 44.987f, 56.348f);
 	lightNode->rotate->x = 90.0f;
 
 	//Fill Light
-	
 	LightNode* lightNode2 = new LightNode("filllight", GL_LIGHT1, POINTLIGHT);
 	lightNode2->setTranslation(67.357f, 42.842f, 0.0f);
 	lightNode2->intensity = 0.5f;
@@ -1340,8 +1345,6 @@ int main(int argc, char** argv)
 	
 	glutCreateWindow("Teapot Master - Leonard Teo");
 	
-	
-
 	//Initialize GLEW
 	GLenum err = glewInit();
 	if (GLEW_OK != err)
@@ -1350,7 +1353,20 @@ int main(int argc, char** argv)
 		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
 		exit(1);
 	}
-	fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
+	//fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
+
+	//Print welcome
+	cout << "Teapot Master version 1.0" << endl;
+	cout << "Author: Leonard Teo <teo.leonard@gmail.com>" << endl;
+	cout << "Student ID: 9724761, Concordia University, Montreal, Canada" << endl << endl;
+	
+	cout << "Instructions: " << endl;
+	cout << "============= " << endl;
+	cout << "Herd the teapots into the Cornell Box!" << endl;
+	cout << endl;
+	cout << "W A S D keys: move the ball" << endl;
+	cout << "Arrow keys: camera view" << endl;
+	cout << "Escape: Quit" << endl;
 	
 	//Create a random number seed
 	srand ( time(NULL) );

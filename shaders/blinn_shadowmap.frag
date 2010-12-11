@@ -35,7 +35,8 @@ void main()
 	vec4 specularTerm = vec4(0.0, 0.0, 0.0, 0.0);
 
 	//Calculate global ambient term
-	globalAmbientTerm = gl_FrontMaterial.ambient.rgba * gl_LightModel.ambient.rgba * textureColor.rgba;
+	//globalAmbientTerm = gl_FrontMaterial.ambient.rgba * gl_LightModel.ambient.rgba * textureColor.rgba;
+	globalAmbientTerm = gl_LightModel.ambient.rgba * textureColor.rgba;
 
 	//Calculate per light contributions
 	for (int i=0; i < numLights; i++)
@@ -45,12 +46,14 @@ void main()
 		vec3 halfVector = normalize(lightDirection + eyeDirection);
 
 		//For spotlight, check if the light direction is within the cone
+		/*
 		float normaldotL = max(dot(normal,normalize(lightDirection)),0.0);
 		if (normaldotL > 0.0)	//If the surface is pointing within 90" to the light
 		{
 			float spotEffect = dot(normalize(gl_LightSource[i].spotDirection), -lightDirection);
 			if (spotEffect > gl_LightSource[i].spotCosCutoff)
 			{
+			*/
 
 				//Calculate ambient term
 				ambientTerm += gl_FrontMaterial.ambient.rgba * gl_LightSource[i].ambient.rgba * textureColor.rgba;
@@ -60,10 +63,10 @@ void main()
 
 				//Blinn-Phong Shading specular term
 				specularTerm += gl_FrontMaterial.specular.rgba * gl_LightSource[i].specular.rgba * pow( max(dot(normal, halfVector), 0.0), gl_FrontMaterial.shininess);
-
+				/*
 			}
 		}
-
+		*/
 	}
 
 	//output color
