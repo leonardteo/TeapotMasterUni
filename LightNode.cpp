@@ -7,7 +7,7 @@ LightNode::LightNode(string id, GLenum lightId, LightType type) : Node(id)
 	this->lightId = lightId;
 	this->on = true;
 
-	this->debug = true;
+	this->debug = false;
 	
 	this->ambient[0] = 1.0f;
 	this->ambient[1] = 1.0f;
