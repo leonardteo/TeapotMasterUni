@@ -1371,7 +1371,7 @@ int main(int argc, char** argv)
 
 	//Print welcome
 	cout << "Teapot Master version 1.0" << endl;
-	cout << "Author: Leonard Teo <teo.leonard@gmail.com>" << endl;
+	cout << "Author: Leonard Teo <teo.leonard@gmail.com>" << endl << endl;
 
 	cout << "Instructions: " << endl;
 	cout << "============= " << endl;
