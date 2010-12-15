@@ -1334,9 +1334,7 @@ int main(int argc, char** argv)
 	//Make sure we can load up all the correct directories
 	string prog = argv[0];
 	int pos = prog.find_last_of("/") + 1;
-	
 	string path = prog.substr(0, pos);
-	cout << "Path: " << path << endl;
 	chdir(path.c_str());
 	
 #endif
@@ -1374,8 +1372,7 @@ int main(int argc, char** argv)
 	//Print welcome
 	cout << "Teapot Master version 1.0" << endl;
 	cout << "Author: Leonard Teo <teo.leonard@gmail.com>" << endl;
-	cout << "Student ID: 9724761, Concordia University, Montreal, Canada" << endl << endl;
-	
+
 	cout << "Instructions: " << endl;
 	cout << "============= " << endl;
 	cout << "Herd the teapots into the Cornell Box!" << endl;
