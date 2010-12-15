@@ -526,6 +526,10 @@ static void update_teapot_movements()
 			if (distance_to_player < (ballRadius + teapots[i]->boundingSphereRadius))
 			{
 				velocityVec = teapot_to_player;
+				
+				//Make sure that the ball doesn't go under
+				velocityVec.y = 0.0f;
+				
 				velocityVec.normalize();
 				velocityVec = velocityVec * 0.5f;
 				//newTeapotPosition = newTeapotPosition + velocityVec;
@@ -1325,6 +1329,18 @@ void setShaders()
 int main(int argc, char** argv)
 {	
 
+#ifdef __APPLE__
+	
+	//Make sure we can load up all the correct directories
+	string prog = argv[0];
+	int pos = prog.find_last_of("/") + 1;
+	
+	string path = prog.substr(0, pos);
+	cout << "Path: " << path << endl;
+	chdir(path.c_str());
+	
+#endif
+	
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(800, 600);
